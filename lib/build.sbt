@@ -13,5 +13,16 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 
-// TODO: publish artifactory
+publishTo := {
+  val nexus = "http://artifactory.corp.snips.net/artifactory/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "libs-snapshot-local")
+  else
+    Some("releases"  at nexus + "libs-release-local")
+}
 
+credentials += Credentials(
+  "Artifactory Realm",
+  "artifactory.corp.snips.net",
+  System.getenv("ARTIFACTORY_USERNAME"),
+  System.getenv("ARTIFACTORY_PASSWORD"))
