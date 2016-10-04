@@ -93,21 +93,21 @@ class BsonMacrosTest extends FlatSpec with Matchers {
     }
   }
 
-  case class Iota(_id: BsonObjectId, a: List[Int])
+  case class Iota(_id: BsonObjectId, a: Seq[Int])
 
   CodecGen[Iota](registry)
-  "Iota" should "have list[prim] support" in {
-    val iota1 = Iota(org.mongodb.scala.bson.BsonObjectId(), List(1, 2, 3))
-    toDBObject(iota1) should be(BsonDocument("_id" -> iota1._id, "a" -> List(1, 2, 3)))
+  "Iota" should "have Seq[prim] support" in {
+    val iota1 = Iota(org.mongodb.scala.bson.BsonObjectId(), Seq(1, 2, 3))
+    toDBObject(iota1) should be(BsonDocument("_id" -> iota1._id, "a" -> Seq(1, 2, 3)))
     fromDBObject[Iota](toDBObject(iota1)) should be(iota1)
   }
 
-  case class Kappa(_id: BsonObjectId, a: List[Beta])
+  case class Kappa(_id: BsonObjectId, a: Seq[Beta])
 
   CodecGen[Kappa](registry)
-  "Kappa" should "have list[Object] support" in {
-    val kappa1 = Kappa(org.mongodb.scala.bson.BsonObjectId(), List(Beta("foo")))
-    toDBObject(kappa1) should be(BsonDocument("_id" -> kappa1._id, "a" -> List(BsonDocument("_id" -> "foo"))))
+  "Kappa" should "have Seq[Object] support" in {
+    val kappa1 = Kappa(org.mongodb.scala.bson.BsonObjectId(), Seq(Beta("foo")))
+    toDBObject(kappa1) should be(BsonDocument("_id" -> kappa1._id, "a" -> Seq(BsonDocument("_id" -> "foo"))))
     fromDBObject[Kappa](toDBObject(kappa1)) should be(kappa1)
   }
 

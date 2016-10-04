@@ -1,6 +1,7 @@
 package ai.snips.bsonmacros
 
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 
 import org.bson._
 import org.bson.codecs._
@@ -8,6 +9,7 @@ import org.bson.codecs.configuration._
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
+import scala.util.Try
 
 class DoubleCodec extends Codec[Double] {
   def getEncoderClass = classOf[Double]
@@ -51,23 +53,23 @@ class InstantCodec extends Codec[Instant] {
   }
 }
 
-class ListCodec[T](inner: Codec[T]) extends Codec[List[T]] {
-  def getEncoderClass = classOf[List[T]]
+class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] {
+  def getEncoderClass = classOf[Seq[T]]
 
-  def encode(writer: BsonWriter, it: List[T], encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Seq[T], encoderContext: EncoderContext) {
     writer.writeStartArray()
     it.foreach(inner.encode(writer, _, encoderContext))
     writer.writeEndArray()
   }
 
-  def decode(reader: BsonReader, decoderContext: DecoderContext): List[T] = {
+  def decode(reader: BsonReader, decoderContext: DecoderContext): Seq[T] = {
     reader.readStartArray()
     val buffer = scala.collection.mutable.Buffer[T]()
     while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
       buffer.append(inner.decode(reader, decoderContext))
     }
     reader.readEndArray()
-    buffer.toList
+    buffer.toSeq
   }
 }
 
@@ -98,7 +100,7 @@ class DynamicCodecRegistry extends CodecRegistry {
 
   import collection.JavaConverters._
 
-  def get[T](it: Class[T]) = scala.util.Try {
+  def get[T](it: Class[T]) = Try {
     providedCodecs.get(it)
   }.toOption.orElse {
     Some(registered(it).asInstanceOf[Codec[T]])
@@ -114,7 +116,7 @@ class DynamicCodecRegistry extends CodecRegistry {
       CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new InstantCodec)
     )
 
-  val registered = new java.util.concurrent.ConcurrentHashMap[Class[_], Codec[_]]().asScala
+  val registered = new ConcurrentHashMap[Class[_], Codec[_]]().asScala
 }
 
 object CodecGen {
@@ -138,10 +140,10 @@ object CodecGen {
         q"""$registry.get(classOf[${tpe.typeSymbol}]).asInstanceOf[Codec[Any]]"""
       }
     }
-    case class ListField(inner: FieldType) extends FieldType {
-      def tpe = appliedType(typeOf[List[Any]].typeConstructor, List(inner.tpe))
+    case class SeqField(inner: FieldType) extends FieldType {
+      def tpe = appliedType(typeOf[Seq[Any]].typeConstructor, List(inner.tpe))
 
-      def codecExpr: Tree = q"""new ai.snips.bsonmacros.ListCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
+      def codecExpr: Tree = q"""new ai.snips.bsonmacros.SeqCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
     }
     case class MapField(inner: FieldType) extends FieldType {
       def tpe = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(typeOf[String], inner.tpe))
@@ -155,8 +157,8 @@ object CodecGen {
         if (inner.isEmpty) {
           SimpleField(outer)
         } else {
-          if (outer.typeConstructor == typeOf[List[Any]].typeConstructor) {
-            ListField(FieldType(inner.head))
+          if (outer.typeConstructor == typeOf[Seq[Any]].typeConstructor) {
+            SeqField(FieldType(inner.head))
           } else if (outer.typeConstructor == typeOf[Map[String, Any]].typeConstructor) {
             MapField(FieldType(inner(1)))
           } else {
@@ -202,50 +204,50 @@ object CodecGen {
         def encode(writer: BsonWriter, it:$tpe, encoderContext: EncoderContext) {
           ${
         Block(
-          List(q"""writer.writeStartDocument""") ++
+          Seq(q"""writer.writeStartDocument""") ++
             fields.zipWithIndex.flatMap { case (field, ix) =>
               if (field.option) {
-                List(
+                Seq(
                   q"""if(it.${field.name.toTermName}.isDefined) ${
                     Block(
                       q"""writer.writeName(${Literal(Constant(field.name.toString))})""",
                       q"""_codecs($ix).encode(writer, it.${field.name.toTermName}.get, encoderContext)""")
                   }""")
               } else {
-                List(
+                Seq(
                   q"""writer.writeName(${Literal(Constant(field.name.toString))})""",
                   q"""_codecs($ix).encode(writer, it.${field.name.toTermName}, encoderContext)""")
               }
             } ++
-            List(q"""writer.writeEndDocument"""): _*
+            Seq(q"""writer.writeEndDocument"""): _*
         )
       }}
 
         def decode(reader: BsonReader, decoderContext: DecoderContext):$tpe =
           ${
         Block(
-          List( q"""reader.readStartDocument""") ++
+          Seq( q"""reader.readStartDocument""") ++
             fields.map(f =>
               q"""var ${f.name.toTermName}:Option[${f.raw.tpe}] = None"""
             ) ++
-            List(
+            Seq(
               q"""while(reader.readBsonType != BsonType.END_OF_DOCUMENT) ${
                 Match(
                   q"""reader.readName()""",
                   fields.zipWithIndex.map { case (field, ix) =>
                     CaseDef(Literal(Constant(field.name.decodedName.toString)),
                       q""" ${field.name.toTermName} = Some(_codecs($ix).decode(reader, decoderContext).asInstanceOf[${field.raw.tpe}]) """)
-                  } ++ List(CaseDef(pq""" foo """, q"""println("Ignore unmapped field `" + foo + "'"); reader.skipValue()"""))
+                  } ++ Seq(CaseDef(pq""" foo """, q"""println("Ignore unmapped field `" + foo + "'"); reader.skipValue()"""))
                 )
               }"""
             ) ++
-            List( q"""reader.readEndDocument""") ++
+            Seq( q"""reader.readEndDocument""") ++
             fields.filter(!_.option).map { field =>
               q"""if(${field.name.toTermName}.isEmpty) {
                 throw new RuntimeException("No value found for required field `" + ${field.name.toTermName.toString} + "'")
               }"""
             } ++
-            List(
+            Seq(
               New(tpe, fields.map(f => if (f.option) q"""${f.name.toTermName}""" else q"""${f.name.toTermName}.get"""): _*)
             ): _*)
       }
