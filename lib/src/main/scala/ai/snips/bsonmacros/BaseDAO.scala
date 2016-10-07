@@ -57,9 +57,9 @@ abstract class BaseDAO[DO](implicit ct: scala.reflect.ClassTag[DO],
       UpdateOptions().upsert(true)).toFuture
   }
 
-  def all: Observable[DO] = collection.find()
+  def all: FindObservable[DO] = collection.find()
 
-  def find(bson: Document): Observable[DO] = collection.find(bson)
+  def find(bson: Document): FindObservable[DO] = collection.find(bson)
 
   def toDBObject(o: DO) = {
     implicit val codecs = collection.codecRegistry
