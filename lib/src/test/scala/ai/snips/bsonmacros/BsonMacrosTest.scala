@@ -7,12 +7,12 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 
   implicit val registry = new DynamicCodecRegistry
 
-  case class Alpha(a: Integer, b: String, c: Double, d: Int)
+  case class Alpha(a: Integer, b: String, c: Double, d: Int, e: Boolean)
 
   CodecGen[Alpha](registry)
   "Alpha" should "be alpha" in {
-    val a = Alpha(12, "foo", 42.12, 42)
-    toDBObject(a) should be(BsonDocument("a" -> 12, "b" -> "foo", "c" -> 42.12, "d" -> 42))
+    val a = Alpha(12, "foo", 42.12, 42, false)
+    toDBObject(a) should be(BsonDocument("a" -> 12, "b" -> "foo", "c" -> 42.12, "d" -> 42, "e" -> false))
     fromDBObject[Alpha](toDBObject(a)) should be(a)
   }
 
