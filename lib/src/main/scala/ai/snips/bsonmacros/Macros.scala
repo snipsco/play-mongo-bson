@@ -127,7 +127,7 @@ class DynamicCodecRegistry extends CodecRegistry {
   val providedCodecs =
     CodecRegistries.fromRegistries(
       org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY,
-      CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new InstantCodec)
+      CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new InstantCodec, new BooleanCodec)
     )
 
   val registered = new ConcurrentHashMap[Class[_], Codec[_]]().asScala
