@@ -39,6 +39,20 @@ class IntCodec extends Codec[Int] {
   }
 }
 
+class BooleanCodec extends Codec[Boolean] {
+  def getEncoderClass = classOf[Boolean]
+
+  val inner = new org.bson.codecs.BooleanCodec
+
+  def encode(writer: BsonWriter, it: Boolean, encoderContext: EncoderContext) {
+    inner.encode(writer, it, encoderContext)
+  }
+
+  def decode(reader: BsonReader, decoderContext: DecoderContext): Boolean = {
+    inner.decode(reader, decoderContext)
+  }
+}
+
 class InstantCodec extends Codec[Instant] {
   def getEncoderClass = classOf[Instant]
 
