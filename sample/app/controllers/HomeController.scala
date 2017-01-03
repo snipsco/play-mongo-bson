@@ -17,7 +17,7 @@ class HomeController @Inject()(sampleDataDAO: SampleDataDAO,
                               (implicit ec: ExecutionContext) extends Controller {
 
   def index = Action.async {
-    val data = SampleData(BsonObjectId(), "sample", (Math.random() * 10).toInt)
+    val data = SampleData(BsonObjectId(), "sample", boolean = false, (Math.random() * 10).toInt)
 
     val future = for {
       _ <- dbContext.ping()

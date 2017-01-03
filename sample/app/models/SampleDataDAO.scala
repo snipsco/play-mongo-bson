@@ -9,6 +9,7 @@ import scala.concurrent.ExecutionContext
 
 case class SampleData(_id: BsonObjectId,
                       string: String,
+                      boolean: Boolean,
                       int: Int)
 
 class SampleDataDAO @Inject()(val dbContext: DatabaseContext)
@@ -19,5 +20,4 @@ class SampleDataDAO @Inject()(val dbContext: DatabaseContext)
   val db = dbContext.database("sample_db")
 
   override val collection = db.getCollection[SampleData]("sample_data")
-
 }
