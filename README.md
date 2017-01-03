@@ -62,3 +62,16 @@ Sample
 ------
 
 Go to [sample project](sample) ([HomeController](sample/app/controllers/HomeController.scala), [SampleDataDAO](sample/app/models/SampleDataDAO.scala)) on how to use it
+
+Supported types
+---------------
+
+ - String
+ - Double
+ - Int
+ - Boolean
+ - java.time.Instant
+ - Seq[A]
+ - Map[String, A]
+
+Default values are not yet supported (eg. `case class Foo(bar: Int = 12)`)
