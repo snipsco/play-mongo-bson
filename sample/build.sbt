@@ -1,6 +1,6 @@
 name := """sample"""
 
-version := "1.0-SNAPSHOT"
+version := "1.0"
 
 lazy val sample = (project in file(".")).enablePlugins(PlayScala)
 
@@ -12,7 +12,7 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "ai.snips" %% "play-mongo-bson" % "1.0",
+  "ai.snips" %% "play-mongo-bson" % "0.2",
   "org.mongodb" % "mongo-java-driver" % "3.2.2",
   "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1"
 )

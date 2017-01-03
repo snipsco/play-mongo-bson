@@ -1,6 +1,9 @@
 Play Mongo BSON
 ===============
 
+<!--- [![Build Status](https://travis-ci.org/snipsco/play-mongo-bson.svg?branch=master)](https://travis-ci.org/snipsco/play-mongo-bson) -->
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://img.shields.io/badge/license-MIT-blue.svg)
+
 A Scala MongoDB Object-Document-Mapper for Play Framework using macros to
 serialize/deserialize case class as BSON documents. The idea is to get
 something similar to [salat](https://github.com/salat/salat).
@@ -27,7 +30,7 @@ You will need to provide also Java and Scala mongo drivers.
 ```
 libraryDependencies ++= Seq(
   ...
-  "ai.snips" %% "play-mongo-bson" % "1.0",
+  "ai.snips" %% "play-mongo-bson" % "0.2",
   "org.mongodb" % "mongo-java-driver" % "3.2.2",
   "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1"
 )
@@ -75,3 +78,9 @@ Supported types
  - Map[String, A]
 
 Default values are not yet supported (eg. `case class Foo(bar: Int = 12)`)
+
+
+License
+-------
+
+Licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)
