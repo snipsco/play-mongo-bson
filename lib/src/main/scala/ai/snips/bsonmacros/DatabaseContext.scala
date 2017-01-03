@@ -21,11 +21,9 @@ class DatabaseContext @Inject()(val conf: Configuration,
     Future.successful(client.close())
   }
 
-  def database(name: String): MongoDatabase = {
+  def database(name: String): MongoDatabase =
     client.getDatabase(name).withCodecRegistry(codecRegistry)
-  }
 
-  def ping(): Future[Unit] = {
+  def ping(): Future[Unit] =
     client.listDatabaseNames().toFuture.map(_ => ())
-  }
 }
