@@ -4,4 +4,4 @@ scala:
 jdk:
   - oraclejdk8
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test
+  - cd lib && sbt ++$TRAVIS_SCALA_VERSION test
