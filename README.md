@@ -1,7 +1,7 @@
 Play Mongo BSON
 ===============
 
-<!--- [![Build Status](https://travis-ci.org/snipsco/play-mongo-bson.svg?branch=master)](https://travis-ci.org/snipsco/play-mongo-bson) -->
+[![Build Status](https://travis-ci.org/snipsco/play-mongo-bson.svg?branch=master)](https://travis-ci.org/snipsco/play-mongo-bson)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://img.shields.io/badge/license-MIT-blue.svg)
 
 A Scala MongoDB Object-Document-Mapper for Play Framework using macros to
