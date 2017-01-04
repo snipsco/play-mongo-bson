@@ -25,7 +25,7 @@ build.sbt
 
 Import play-mongo-bson in your project.
 
-You will need to provide also Java and Scala mongo drivers.
+You will need to provide also Scala mongo driver.
 
 ```
 resolvers ++= Seq(
@@ -36,7 +36,6 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   ...
   "ai.snips" %% "play-mongo-bson" % "0.2",
-  "org.mongodb" % "mongo-java-driver" % "3.2.2",
   "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1"
 )
 ```
@@ -64,7 +63,7 @@ class SampleDataDAO @Inject()(val dbContext: DatabaseContext)
 Configuration
 -------------
 
-Provide "mongodb.uri" in application.conf, if not provided "mongodb://localhost" will be used.
+Provide `"mongodb.uri"` in application.conf, if not provided `"mongodb://localhost"` will be used.
 
 Sample
 ------
