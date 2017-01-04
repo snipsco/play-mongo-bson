@@ -1,7 +1,7 @@
 Play Mongo BSON
 ===============
 
-<!--- [![Build Status](https://travis-ci.org/snipsco/play-mongo-bson.svg?branch=master)](https://travis-ci.org/snipsco/play-mongo-bson) -->
+[![Build Status](https://travis-ci.org/snipsco/play-mongo-bson.svg?branch=master)](https://travis-ci.org/snipsco/play-mongo-bson)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://img.shields.io/badge/license-MIT-blue.svg)
 
 A Scala MongoDB Object-Document-Mapper for Play Framework using macros to
@@ -28,6 +28,11 @@ Import play-mongo-bson in your project.
 You will need to provide also Java and Scala mongo drivers.
 
 ```
+resolvers ++= Seq(
+  ...
+  "Sonatype OSS" at "https://oss.sonatype.org/content/groups/public"
+)
+
 libraryDependencies ++= Seq(
   ...
   "ai.snips" %% "play-mongo-bson" % "0.2",

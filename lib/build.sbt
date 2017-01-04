@@ -1,7 +1,5 @@
 name := """play-mongo-bson"""
 
-version := "0.2-SNAPSHOT"
-
 organization := "ai.snips"
 
 scalaVersion := "2.11.8"
@@ -13,11 +11,19 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 
-/*publishTo <<= version { v: String =>
+publishTo := {
   val nexus = "https://oss.sonatype.org/"
-  if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")
-  else                             Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
+
+credentials += Credentials(
+  "Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  System.getenv("SONATYPE_USERNAME"),
+  System.getenv("SONATYPE_PASSWORD"))
 
 publishMavenStyle := true
 
@@ -25,7 +31,7 @@ publishArtifact in Test := false
 
 pomIncludeRepository := { _ => false }
 
-pomExtra := (
+pomExtra :=
   <url>https://snips.ai</url>
     <licenses>
       <license>
@@ -50,4 +56,3 @@ pomExtra := (
         <url>http://www.eigengo.com</url>
       </developer>
     </developers>
-  )*/
