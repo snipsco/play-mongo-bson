@@ -11,7 +11,6 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 
-/*
 publishTo := {
   val nexus = "https://oss.sonatype.org/"
   if (isSnapshot.value)
@@ -19,21 +18,12 @@ publishTo := {
   else
     Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
-*/
-
-publishTo := {
-  val nexus = "http://artifactory.corp.snips.net/artifactory/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "libs-snapshot-local")
-  else
-    Some("releases"  at nexus + "libs-release-local")
-}
 
 credentials += Credentials(
-  "Artifactory Realm",
-  "artifactory.corp.snips.net",
-  System.getenv("ARTIFACTORY_USERNAME"),
-  System.getenv("ARTIFACTORY_PASSWORD"))
+  "Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  System.getenv("SONATYPE_USERNAME"),
+  System.getenv("SONATYPE_PASSWORD"))
 
 publishMavenStyle := true
 
