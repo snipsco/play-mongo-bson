@@ -28,6 +28,11 @@ Import play-mongo-bson in your project.
 You will need to provide also Java and Scala mongo drivers.
 
 ```
+resolvers ++= Seq(
+  ...
+  "Sonatype OSS" at "https://oss.sonatype.org/content/groups/public"
+)
+
 libraryDependencies ++= Seq(
   ...
   "ai.snips" %% "play-mongo-bson" % "0.2",
