@@ -25,6 +25,8 @@ credentials += Credentials(
   System.getenv("SONATYPE_USERNAME"),
   System.getenv("SONATYPE_PASSWORD"))
 
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
 publishMavenStyle := true
 
 publishArtifact in Test := false
