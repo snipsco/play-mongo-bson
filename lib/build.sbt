@@ -55,6 +55,6 @@ pomExtra :=
       <developer>
         <id>gstraymond</id>
         <name>Guillaume Saint-Raymond</name>
-        <url>http://www.eigengo.com</url>
+        <url>https://snips.ai</url>
       </developer>
     </developers>

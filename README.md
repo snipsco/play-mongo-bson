@@ -14,16 +14,16 @@ whereas Scala compiler macros can be used now (simpler build, no more issues
 with type elision). Also it was still bound (by the BSON types) to the "old"
 synchronous MongoDB API.
 
-Alternative projects are offering full driver and object mapping solution but
-now that the official driver is asynchronous, they feel less relevant. Also,
-they are re-inventing the whole API instead of sticking to the official MongoDB
-line: same API everywhere. This is getting frustrated when switching between
-languages constantly.
+Alternative projects are offering full driver and object mapping solution but 
+now that the official driver is asynchronous, they feel less relevant. Also, 
+they are re-inventing the whole API instead of sticking to the official MongoDB 
+line: same API for all drivers. This is getting frustrating when switching 
+between languages constantly.
 
 build.sbt
 ---------
 
-Import play-mongo-bson in your project.
+Import play-mongo-bson in your project. Only Scala 2.11 is supported.
 
 You will need to provide also Scala mongo driver.
 
@@ -43,7 +43,7 @@ libraryDependencies ++= Seq(
 DAO
 ---
 
- - extend `BaseDAO[A]` by specifying you data class.
+ - extend `BaseDAO[_]` by specifying you data class.
  - register you case case in the codec registry using `CodecGen`.
  - declare your mongo collection.
 
@@ -73,13 +73,14 @@ Go to [sample project](sample) ([HomeController](sample/app/controllers/HomeCont
 Supported types
 ---------------
 
- - String
- - Double
- - Int
- - Boolean
- - java.time.Instant
- - Seq[A]
- - Map[String, A]
+ - `String`
+ - `Boolean`
+ - `Int`
+ - `Double`
+ - `java.time.Instant`
+ - `Option[_]`
+ - `Seq[_]`
+ - `Map[String, _]`
 
 Default values are not yet supported (eg. `case class Foo(bar: Int = 12)`)
 
