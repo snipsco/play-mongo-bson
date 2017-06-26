@@ -200,6 +200,8 @@ object CodecGen {
         import org.bson._
         import org.bson.codecs._
 
+        val log = play.api.Logger(getClass)
+
         val _codecs = ${
         fields.map { field =>
           q"""scala.util.Try {
@@ -251,7 +253,7 @@ object CodecGen {
                   fields.zipWithIndex.map { case (field, ix) =>
                     CaseDef(Literal(Constant(field.name.decodedName.toString)),
                       q""" ${field.name.toTermName} = Some(_codecs($ix).decode(reader, decoderContext).asInstanceOf[${field.raw.tpe}]) """)
-                  } ++ Seq(CaseDef(pq""" foo """, q"""println("Ignore unmapped field `" + foo + "'"); reader.skipValue()"""))
+                  } ++ Seq(CaseDef(pq""" foo """, q"""log.debug("Ignore unmapped field `" + foo + "'"); reader.skipValue()"""))
                 )
               }"""
             ) ++
