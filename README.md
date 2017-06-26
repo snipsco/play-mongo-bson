@@ -84,6 +84,17 @@ Supported types
 
 Default values are not yet supported (eg. `case class Foo(bar: Int = 12)`)
 
+Publishing release
+------------------
+
+```
+export SONATYPE_USERNAME=...
+export SONATYPE_PASSWORD=...
+cd lib
+bin/activator release
+```
+
+This will publish artifacts in release and create a new snapshot.
 
 License
 -------
