@@ -39,7 +39,7 @@ abstract class BaseDAO[DO](implicit ct: ClassTag[DO],
     findOne(byIdSelector(id))
 
   def findOne(document: Document): Future[Option[DO]] =
-    collection.find[DO](document).first.toFuture.map(_.headOption)
+    collection.find[DO](document).limit(1).toFuture.map(_.headOption)
 
   def updateOneById(id: CanBeBsonValue, update: Document): Future[_] =
     collection.updateOne(byIdSelector(id), update).toFuture
