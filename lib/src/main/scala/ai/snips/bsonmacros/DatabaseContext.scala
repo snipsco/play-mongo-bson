@@ -13,7 +13,7 @@ class DatabaseContext @Inject()(val conf: Configuration,
                                 applicationLifecycle: ApplicationLifecycle)
                                (implicit val ec: ExecutionContext) {
 
-  lazy val mongoConf = conf.getString("mongodb.uri").getOrElse("mongodb://localhost")
+  lazy val mongoConf: String = conf.getOptional[String]("mongodb.uri").getOrElse("mongodb://localhost")
   lazy val client = MongoClient(mongoConf)
   lazy val codecRegistry = new DynamicCodecRegistry
 

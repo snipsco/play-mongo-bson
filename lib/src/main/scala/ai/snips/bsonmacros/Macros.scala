@@ -7,12 +7,13 @@ import org.bson._
 import org.bson.codecs._
 import org.bson.codecs.configuration._
 
+import scala.collection.concurrent
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 import scala.util.Try
 
 class DoubleCodec extends Codec[Double] {
-  def getEncoderClass = classOf[Double]
+  def getEncoderClass: Class[Double] = classOf[Double]
 
   val inner = new BsonDoubleCodec
 
@@ -26,7 +27,7 @@ class DoubleCodec extends Codec[Double] {
 }
 
 class IntCodec extends Codec[Int] {
-  def getEncoderClass = classOf[Int]
+  def getEncoderClass: Class[Int] = classOf[Int]
 
   val inner = new IntegerCodec
 
@@ -40,7 +41,7 @@ class IntCodec extends Codec[Int] {
 }
 
 class BooleanCodec extends Codec[Boolean] {
-  def getEncoderClass = classOf[Boolean]
+  def getEncoderClass: Class[Boolean] = classOf[Boolean]
 
   val inner = new org.bson.codecs.BooleanCodec
 
@@ -54,7 +55,7 @@ class BooleanCodec extends Codec[Boolean] {
 }
 
 class InstantCodec extends Codec[Instant] {
-  def getEncoderClass = classOf[Instant]
+  def getEncoderClass: Class[Instant] = classOf[Instant]
 
   val inner = new BsonDateTimeCodec
 
@@ -68,7 +69,7 @@ class InstantCodec extends Codec[Instant] {
 }
 
 class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] {
-  def getEncoderClass = classOf[Seq[T]]
+  def getEncoderClass: Class[Seq[T]] = classOf[Seq[T]]
 
   def encode(writer: BsonWriter, it: Seq[T], encoderContext: EncoderContext) {
     writer.writeStartArray()
@@ -83,12 +84,12 @@ class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] {
       buffer.append(inner.decode(reader, decoderContext))
     }
     reader.readEndArray()
-    buffer.toSeq
+    buffer
   }
 }
 
 class MapCodec[V](inner: Codec[V]) extends Codec[Map[String, V]] {
-  def getEncoderClass = classOf[Map[String, V]]
+  def getEncoderClass: Class[Map[String, V]] = classOf[Map[String, V]]
 
   def encode(writer: BsonWriter, it: Map[String, V], encoderContext: EncoderContext) {
     writer.writeStartDocument()
@@ -114,7 +115,7 @@ class DynamicCodecRegistry extends CodecRegistry {
 
   import collection.JavaConverters._
 
-  def get[T](it: Class[T]) = Try {
+  def get[T](it: Class[T]): Codec[T] = Try {
     providedCodecs.get(it)
   }.toOption.orElse {
     Some(registered(it).asInstanceOf[Codec[T]])
@@ -124,13 +125,14 @@ class DynamicCodecRegistry extends CodecRegistry {
     registered.put(codec.getEncoderClass, codec)
   }
 
-  val providedCodecs =
+  val providedCodecs: CodecRegistry =
     CodecRegistries.fromRegistries(
       org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY,
       CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new InstantCodec, new BooleanCodec)
     )
 
-  val registered = new ConcurrentHashMap[Class[_], Codec[_]]().asScala
+  val registered: concurrent.Map[Class[_], Codec[_]] =
+    new ConcurrentHashMap[Class[_], Codec[_]]().asScala
 }
 
 object CodecGen {
@@ -155,12 +157,12 @@ object CodecGen {
       }
     }
     case class SeqField(inner: FieldType) extends FieldType {
-      def tpe = appliedType(typeOf[Seq[Any]].typeConstructor, List(inner.tpe))
+      def tpe: c.universe.Type = appliedType(typeOf[Seq[Any]].typeConstructor, List(inner.tpe))
 
       def codecExpr: Tree = q"""new ai.snips.bsonmacros.SeqCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
     }
     case class MapField(inner: FieldType) extends FieldType {
-      def tpe = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(typeOf[String], inner.tpe))
+      def tpe: c.universe.Type = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(typeOf[String], inner.tpe))
 
       def codecExpr: Tree = q"""new ai.snips.bsonmacros.MapCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
     }
@@ -188,7 +190,8 @@ object CodecGen {
       val ftpe = tpe.decl(field.name).typeSignature.resultType
       val isOption = ftpe.typeConstructor == typeOf[Option[_]].typeConstructor
       val deoptioned: Type = if (isOption) {
-        val TypeRef(_, _, inner) = ftpe; inner.head
+        val TypeRef(_, _, inner) = ftpe;
+        inner.head
       } else ftpe
       Field(name, isOption, FieldType(deoptioned))
     }
