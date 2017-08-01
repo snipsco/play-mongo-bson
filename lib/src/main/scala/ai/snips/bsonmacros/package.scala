@@ -8,7 +8,7 @@ import scala.reflect._
 
 package object bsonmacros {
 
-  def toDBObject(a: Any)(implicit repo: CodecRegistry) = {
+  def toDBObject(a: Any)(implicit repo: CodecRegistry): BsonDocument = {
     val codec: Encoder[Any] = repo.get(a.getClass).asInstanceOf[Encoder[Any]]
     val doc = new BsonDocument()
     val writer = new BsonDocumentWriter(doc)

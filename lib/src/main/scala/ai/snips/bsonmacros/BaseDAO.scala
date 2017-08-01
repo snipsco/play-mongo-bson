@@ -2,6 +2,7 @@ package ai.snips.bsonmacros
 
 import ai.snips.bsonmacros
 import ai.snips.bsonmacros.BsonMagnets.CanBeBsonValue
+import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala._
 import org.mongodb.scala.bson.{BsonTransformer, BsonValue, Document}
 import org.mongodb.scala.model._
@@ -19,7 +20,7 @@ object BsonMagnets {
   (v: T)
   (implicit transformer: BsonTransformer[T]): CanBeBsonValue = {
     new CanBeBsonValue {
-      override val value = transformer(v)
+      override val value: BsonValue = transformer(v)
     }
   }
 }
@@ -31,7 +32,7 @@ abstract class BaseDAO[DO](implicit ct: ClassTag[DO],
 
   private val ID = "_id"
 
-  implicit lazy val codecs = collection.codecRegistry
+  implicit lazy val codecs: CodecRegistry = collection.codecRegistry
 
   def byIdSelector(id: CanBeBsonValue): Document = Document(ID -> id.value)
 
@@ -39,7 +40,7 @@ abstract class BaseDAO[DO](implicit ct: ClassTag[DO],
     findOne(byIdSelector(id))
 
   def findOne(document: Document): Future[Option[DO]] =
-    collection.find[DO](document).first.toFuture.map(_.headOption)
+    collection.find[DO](document).limit(1).toFuture.map(_.headOption)
 
   def updateOneById(id: CanBeBsonValue, update: Document): Future[_] =
     collection.updateOne(byIdSelector(id), update).toFuture

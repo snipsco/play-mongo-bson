@@ -14,9 +14,9 @@ import scala.util.control.NonFatal
 @Singleton
 class HomeController @Inject()(sampleDataDAO: SampleDataDAO,
                                dbContext: DatabaseContext)
-                              (implicit ec: ExecutionContext) extends Controller {
+                              (implicit ec: ExecutionContext) extends InjectedController {
 
-  def index = Action.async {
+  def index: Action[AnyContent] = Action.async {
     val data = SampleData(BsonObjectId(), "sample", boolean = false, (Math.random() * 10).toInt)
 
     val future = for {
@@ -37,5 +37,4 @@ class HomeController @Inject()(sampleDataDAO: SampleDataDAO,
         InternalServerError(e.getMessage)
     }
   }
-
 }

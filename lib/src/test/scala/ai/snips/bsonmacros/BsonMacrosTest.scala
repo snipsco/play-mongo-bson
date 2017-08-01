@@ -11,7 +11,7 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 
   CodecGen[Alpha](registry)
   "Alpha" should "be alpha" in {
-    val a = Alpha(12, "foo", 42.12, 42, false)
+    val a = Alpha(12, "foo", 42.12, 42, e = false)
     toDBObject(a) should be(BsonDocument("a" -> 12, "b" -> "foo", "c" -> 42.12, "d" -> 42, "e" -> false))
     fromDBObject[Alpha](toDBObject(a)) should be(a)
   }

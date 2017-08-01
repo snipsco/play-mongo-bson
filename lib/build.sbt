@@ -2,13 +2,13 @@ name := """play-mongo-bson"""
 
 organization := "ai.snips"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.3"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play" % "2.5.8" % "provided",
+  "com.typesafe.play" %% "play" % "2.6.2" % "provided",
   "org.mongodb" % "mongo-java-driver" % "3.2.2" % "provided",
-  "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1" % "provided",
-  "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+  "org.mongodb.scala" %% "mongo-scala-driver" % "2.1.0" % "provided",
+  "org.scalatest" %% "scalatest" % "3.0.3" % "test"
 )
 
 publishTo := {
