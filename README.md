@@ -76,6 +76,7 @@ Supported types
  - `String`
  - `Boolean`
  - `Int`
+ - `Long`
  - `Double`
  - `java.time.Instant`
  - `Option[_]`
