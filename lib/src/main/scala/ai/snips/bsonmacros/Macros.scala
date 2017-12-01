@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import org.bson._
 import org.bson.codecs._
 import org.bson.codecs.configuration._
+import org.bson.codecs.{LongCodec => BsonLongCodec}
 
 import scala.collection.concurrent
 import scala.language.experimental.macros
@@ -36,6 +37,20 @@ class IntCodec extends Codec[Int] {
   }
 
   def decode(reader: BsonReader, decoderContext: DecoderContext): Int = {
+    inner.decode(reader, decoderContext)
+  }
+}
+
+class LongCodec extends Codec[Long] {
+  def getEncoderClass: Class[Long] = classOf[Long]
+
+  val inner = new BsonLongCodec
+
+  def encode(writer: BsonWriter, it: Long, encoderContext: EncoderContext) {
+    inner.encode(writer, it, encoderContext)
+  }
+
+  def decode(reader: BsonReader, decoderContext: DecoderContext): Long = {
     inner.decode(reader, decoderContext)
   }
 }
@@ -128,7 +143,7 @@ class DynamicCodecRegistry extends CodecRegistry {
   val providedCodecs: CodecRegistry =
     CodecRegistries.fromRegistries(
       org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY,
-      CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new InstantCodec, new BooleanCodec)
+      CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new LongCodec, new InstantCodec, new BooleanCodec)
     )
 
   val registered: concurrent.Map[Class[_], Codec[_]] =

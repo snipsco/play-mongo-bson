@@ -1,11 +1,11 @@
 package ai.snips.bsonmacros
 
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId}
 import org.scalatest._
 
 class BsonMacrosTest extends FlatSpec with Matchers {
 
-  implicit val registry = new DynamicCodecRegistry
+  implicit val registry: DynamicCodecRegistry = new DynamicCodecRegistry
 
   case class Alpha(a: Integer, b: String, c: Double, d: Int, e: Boolean)
 
@@ -118,5 +118,14 @@ class BsonMacrosTest extends FlatSpec with Matchers {
     val lambda1 = Lambda(org.mongodb.scala.bson.BsonObjectId(), Map("foo" -> 12, "bar" -> 42))
     toDBObject(lambda1) should be(BsonDocument("_id" -> lambda1._id, "map" -> BsonDocument("foo" -> 12, "bar" -> 42)))
     fromDBObject[Lambda](toDBObject(lambda1)) should be(lambda1)
+  }
+
+  case class Mu(_id: BsonObjectId, long: Long)
+
+  CodecGen[Mu](registry)
+  "Mu" should "have Long support" in {
+    val mu1 = Mu(org.mongodb.scala.bson.BsonObjectId(), 42)
+    toDBObject(mu1) should be(BsonDocument("_id" -> mu1._id, "long" -> BsonInt64(42)))
+    fromDBObject[Mu](toDBObject(mu1)) should be(mu1)
   }
 }
