@@ -128,4 +128,61 @@ class BsonMacrosTest extends FlatSpec with Matchers {
     toDBObject(mu1) should be(BsonDocument("_id" -> mu1._id, "long" -> BsonInt64(42)))
     fromDBObject[Mu](toDBObject(mu1)) should be(mu1)
   }
+
+  sealed trait Nu
+  final case object NuObj extends Nu
+  final case class NuCC(x: String, y: Int) extends Nu
+
+
+  CodecGen[Nu](registry)
+  "Nu" should "support sealed types" in {
+    toDBObject(NuObj) shouldBe BsonDocument("__type" -> "NuObj")
+    fromDBObject[Nu](toDBObject(NuObj)) shouldBe NuObj
+    val cc1 = NuCC("hello", 1)
+    toDBObject(cc1) shouldBe BsonDocument("__type" -> "NuCC", "payload" -> BsonDocument("x" -> cc1.x, "y" -> cc1.y))
+    fromDBObject[Nu](toDBObject(cc1)) shouldBe cc1
+  }
+
+  sealed abstract class Xi(v: String)
+  final case object XiObj extends Xi("test")
+  final case class XiCC(a: String, b: Double) extends Xi(a)
+
+  CodecGen[Xi](registry)
+  "Xi" should "support sealed types" in {
+
+    toDBObject(XiObj) shouldBe BsonDocument("__type" -> "XiObj")
+    fromDBObject[Xi](toDBObject(XiObj)) shouldBe XiObj
+
+    val cc2 = XiCC(a = "what", b = 2.4d)
+    toDBObject(cc2) shouldBe BsonDocument("__type" -> "XiCC", "payload" -> BsonDocument("a" -> cc2.a, "b" -> cc2.b))
+    fromDBObject[Xi](toDBObject(cc2)) shouldBe cc2
+  }
+
+
+  final case class Omnicron(first: Nu, other: Option[Xi])
+
+  CodecGen[Omnicron](registry)
+  "Xi" should "support composite ADTs" in {
+    val omnicron1 = Omnicron(NuObj, Some(XiCC("a", 2.4)))
+    fromDBObject[Omnicron](toDBObject(omnicron1)) shouldBe omnicron1
+  }
+
+  case class Point(x: Int, y: Int)
+  CodecGen[Point](registry)
+  sealed trait Shape
+  final case class Rectangle(bottomLeft: Point, topRight: Point) extends Shape
+  final case class Circle(center: Point, radius: Int) extends Shape
+  final case object Empty extends Shape
+  CodecGen[Shape](registry)
+
+  "Readme sample" should "work" in {
+    val bl = Point(0, 0)
+    val tr = Point(5, 10)
+    val rect = Rectangle(bl, tr)
+    val c = Point(1,1)
+    val circle = Circle(c, 2)
+    Seq(Empty, circle, rect).foreach { s =>
+      fromDBObject[Shape](toDBObject(s)) shouldBe s
+    }
+  }
 }

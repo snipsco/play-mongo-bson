@@ -126,6 +126,15 @@ class MapCodec[V](inner: Codec[V]) extends Codec[Map[String, V]] {
   }
 }
 
+class ExistentialCodec[T](v: T) extends Codec[T] {
+  override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext) {}
+
+  override def getEncoderClass: Class[T] = v.getClass.asInstanceOf[Class[T]]
+
+  override def decode(reader: BsonReader, decoderContext: DecoderContext): T = v
+}
+
+
 class DynamicCodecRegistry extends CodecRegistry {
 
   import collection.JavaConverters._
@@ -140,6 +149,10 @@ class DynamicCodecRegistry extends CodecRegistry {
     registered.put(codec.getEncoderClass, codec)
   }
 
+  def registerFor[T, V <: T](codec: Codec[T], v: Class[V]) {
+    registered.put(v, codec)
+  }
+
   val providedCodecs: CodecRegistry =
     CodecRegistries.fromRegistries(
       org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY,
@@ -152,11 +165,115 @@ class DynamicCodecRegistry extends CodecRegistry {
 
 object CodecGen {
 
-  def apply[T](registry: DynamicCodecRegistry) = macro materializeCodec[T]
+  def apply[T](registry: DynamicCodecRegistry): Codec[T] = macro registerCodec[T]
+
+  def gen[T](registry: DynamicCodecRegistry): Codec[T] = macro materializeCodec[T]
+
+  def forSealedImpl[T: c.WeakTypeTag](c: whitebox.Context)(registry: c.Expr[DynamicCodecRegistry]): c.Expr[Codec[T]] = {
+    import c.universe._
+    val tpe = c.weakTypeOf[T]
+    val ctpe = tpe.typeSymbol.asClass
+    require(ctpe.isSealed)
+    require(ctpe.knownDirectSubclasses.nonEmpty)
+    val (objects, caseClasses) = {
+      val (os, cs) = ctpe.knownDirectSubclasses.partition(_.isModuleClass)
+      (os.map(_.asClass.module.asModule), cs.map(_.asClass))
+    }
+    def nameOf(s: Symbol) = s.fullName.split("\\.").last
+
+    val objCodecs = objects.map(o =>
+      q"""${nameOf(o)} -> {
+         new ai.snips.bsonmacros.ExistentialCodec[$tpe]($o).asInstanceOf[Codec[$tpe]]
+        }"""
+    )
+
+    val ccCodecs = caseClasses.map(cc =>
+      q"${nameOf(cc)} -> ai.snips.bsonmacros.CodecGen.gen[$cc]($registry).asInstanceOf[Codec[$tpe]]"
+    )
+
+    val e = c.Expr[Codec[T]] {
+      q"""{
+        val codec = new org.bson.codecs.Codec[$tpe] {
+          import org.bson._
+          import org.bson.codecs._
+          val codecs: Map[String, Codec[$tpe]] = Seq(..$objCodecs,..$ccCodecs).toMap
+
+          private def rtNameOf(v: $tpe): String = {
+            ${
+            val cases = ctpe.knownDirectSubclasses.map {
+              case c: ClassSymbol if c.isModuleClass => cq"x if x == ${c.module} => ${nameOf(c)}"
+              case c: ClassSymbol                    => cq" _ : ${c.name}        => ${nameOf(c)}"
+            }
+            q"""
+              v match {
+                case ..$cases
+              }
+            """
+            }
+
+          }
+          private val sentinelType = "__type"
+          private val payloadName = "payload"
+          override def getEncoderClass: Class[$tpe] = classOf[$tpe]
+
+          override def encode(writer: BsonWriter, value: $tpe, encoderContext: EncoderContext) {
+            val typeName = rtNameOf(value)
+            writer.writeStartDocument
+            writer.writeString(sentinelType, typeName)
+            val codec = codecs(typeName)
+            if (!codec.isInstanceOf[ai.snips.bsonmacros.ExistentialCodec[$tpe]]) {
+              writer.writeName(payloadName)
+            }
+            codec.encode(writer, value, encoderContext)
+            writer.writeEndDocument
+          }
+
+          override def decode(reader: BsonReader, decoderContext: DecoderContext): $tpe = {
+            reader.readStartDocument
+            val typeName = reader.readString(sentinelType)
+            val codec = codecs(typeName)
+            if (!codec.isInstanceOf[ai.snips.bsonmacros.ExistentialCodec[$tpe]]) {
+              reader.readName(payloadName)
+            }
+            val value = codec.decode(reader, decoderContext)
+            reader.readEndDocument
+            value
+          }
+
+        }
+        $registry.register(codec)
+        ${
+        val regObjs = objects.map(o => q"$registry.registerFor(codec, ${o.name}.getClass)")
+        val regCCs = caseClasses.map(cc => q"$registry.registerFor(codec, classOf[$cc])")
+
+        q"""{..$regCCs;..$regObjs}"""
+        }
+        codec
+      }"""
+
+    }
+    e
+  }
+
+  def registerCodec[T: c.WeakTypeTag](c: whitebox.Context)(registry: c.Expr[DynamicCodecRegistry]): c.Expr[Codec[T]] = {
+    import c.universe._
+    c.Expr[Codec[T]] {
+      q"""
+        val e = ${materializeCodec[T](c)(registry)}
+        $registry.register(e)
+        e
+      """
+    }
+  }
 
   def materializeCodec[T: c.WeakTypeTag](c: whitebox.Context)(registry: c.Expr[DynamicCodecRegistry]): c.Expr[Codec[T]] = {
     import c.universe._
     val tpe = weakTypeOf[T]
+    if (tpe.typeSymbol.isAbstract) {
+      // try generation for sealed classes
+      return forSealedImpl[T](c)(registry)
+    }
+
     val constructor = tpe.decls.collectFirst {
       case m: MethodSymbol if m.isPrimaryConstructor => m
     }.get
@@ -286,7 +403,6 @@ object CodecGen {
             ): _*)
       }
       }
-      $registry.register(codec)
       codec
     }"""
     }

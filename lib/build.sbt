@@ -18,6 +18,8 @@ publishTo := {
     Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
+scalacOptions ++= Seq("-unchecked", "-deprecation")
+
 credentials += Credentials(
   "Sonatype Nexus Repository Manager",
   "oss.sonatype.org",
