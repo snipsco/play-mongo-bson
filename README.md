@@ -35,7 +35,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   ...
-  "ai.snips" %% "play-mongo-bson" % "0.4",
+  "ai.snips" %% "play-mongo-bson" % "0.5",
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.1.0"
 )
 ```
@@ -82,6 +82,16 @@ Supported types
  - `Option[_]`
  - `Seq[_]`
  - `Map[String, _]`
+ - Simple monomorphic and non recursive ADTs
+
+> case class Point(x: Int, y: Int)
+> CodecGen[Point](registry)
+> sealed trait Shape
+> final case class Rectangle(bottomLeft: Point, topRight: Point) extends Shape
+> final case class Circle(center: Point, radius: Int) extends Shape
+> final case object Empty extends Shape
+> CodecGen[Shape](registry)
+
 
 Default values are not yet supported (eg. `case class Foo(bar: Int = 12)`)
 
