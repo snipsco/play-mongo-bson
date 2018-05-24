@@ -114,12 +114,14 @@ class BsonMacrosTest extends FlatSpec with Matchers {
     fromDBObject[Kappa](toDBObject(kappa1)) should be(kappa1)
   }
 
-  case class Lambda(_id: BsonObjectId, map: Map[String, Int])
+  case class Lambda(_id: BsonObjectId, map1: Map[String, Int], map2: Map[Int, Int])
 
   CodecGen[Lambda](registry)
-  "Lambda" should "have Map[String,Int] support" in {
-    val lambda1 = Lambda(org.mongodb.scala.bson.BsonObjectId(), Map("foo" -> 12, "bar" -> 42))
-    toDBObject(lambda1) should be(BsonDocument("_id" -> lambda1._id, "map" -> BsonDocument("foo" -> 12, "bar" -> 42)))
+  "Lambda" should "have Map[String,Int] and Map[Int,Int] support" in {
+    val lambda1 = Lambda(org.mongodb.scala.bson.BsonObjectId(), Map("foo" -> 12, "bar" -> 42), Map(1 -> 12, 2 -> 42))
+    toDBObject(lambda1) should be(BsonDocument("_id" -> lambda1._id,
+	    "map1" -> BsonDocument("foo" -> 12, "bar" -> 42),
+      "map2" -> BsonDocument("1" -> 12, "2" -> 42)))
     fromDBObject[Lambda](toDBObject(lambda1)) should be(lambda1)
   }
 
