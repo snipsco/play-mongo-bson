@@ -14,10 +14,10 @@ whereas Scala compiler macros can be used now (simpler build, no more issues
 with type elision). Also it was still bound (by the BSON types) to the "old"
 synchronous MongoDB API.
 
-Alternative projects are offering full driver and object mapping solution but 
-now that the official driver is asynchronous, they feel less relevant. Also, 
-they are re-inventing the whole API instead of sticking to the official MongoDB 
-line: same API for all drivers. This is getting frustrating when switching 
+Alternative projects are offering full driver and object mapping solution but
+now that the official driver is asynchronous, they feel less relevant. Also,
+they are re-inventing the whole API instead of sticking to the official MongoDB
+line: same API for all drivers. This is getting frustrating when switching
 between languages constantly.
 
 build.sbt
@@ -78,20 +78,28 @@ Supported types
  - `Int`
  - `Long`
  - `Double`
+ - `ObjectId`
+ - `UUID`
  - `java.time.Instant`
  - `Option[_]`
+ - `Either[_,_]`
  - `Seq[_]`
+ - `Set[_]`
+ - `Map[Int, _]`
  - `Map[String, _]`
  - Simple monomorphic and non recursive ADTs
 
-> case class Point(x: Int, y: Int)
-> CodecGen[Point](registry)
-> sealed trait Shape
-> final case class Rectangle(bottomLeft: Point, topRight: Point) extends Shape
-> final case class Circle(center: Point, radius: Int) extends Shape
-> final case object Empty extends Shape
-> CodecGen[Shape](registry)
+```
+case class Point(x: Int, y: Int)
+CodecGen[Point](registry)
 
+
+sealed trait Shape
+final case class Rectangle(bottomLeft: Point, topRight: Point) extends Shape
+final case class Circle(center: Point, radius: Int) extends Shape
+final case object Empty extends Shape
+CodecGen[Shape](registry)
+```
 
 Default values are not yet supported (eg. `case class Foo(bar: Int = 12)`)
 
