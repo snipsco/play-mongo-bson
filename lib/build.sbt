@@ -2,10 +2,10 @@ name := """play-mongo-bson"""
 
 organization := "ai.snips"
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.6"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play" % "2.6.7" % "provided",
+  "com.typesafe.play" %% "play" % "2.6.13" % "provided",
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.1.0" % "provided",
   "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 )
