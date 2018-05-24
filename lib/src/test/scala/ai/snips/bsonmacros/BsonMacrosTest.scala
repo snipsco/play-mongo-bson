@@ -1,6 +1,9 @@
 package ai.snips.bsonmacros
 
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId}
+import java.util.UUID
+
+import org.bson.types.ObjectId
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, ObjectId}
 import org.scalatest._
 
 class BsonMacrosTest extends FlatSpec with Matchers {
@@ -185,4 +188,12 @@ class BsonMacrosTest extends FlatSpec with Matchers {
       fromDBObject[Shape](toDBObject(s)) shouldBe s
     }
   }
+
+	case class San(x: ObjectId, y: UUID)
+	CodecGen[San](registry)
+
+	"ObjectId and UUID" should "work" in {
+		val a = San(ObjectId.get(), UUID.randomUUID())
+		fromDBObject[San](toDBObject(a)) should be(a)
+	}
 }
