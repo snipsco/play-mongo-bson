@@ -93,7 +93,6 @@ Supported types
 case class Point(x: Int, y: Int)
 CodecGen[Point](registry)
 
-
 sealed trait Shape
 final case class Rectangle(bottomLeft: Point, topRight: Point) extends Shape
 final case class Circle(center: Point, radius: Int) extends Shape
