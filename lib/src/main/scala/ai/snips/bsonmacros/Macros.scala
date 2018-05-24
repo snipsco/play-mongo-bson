@@ -103,6 +103,26 @@ class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] {
   }
 }
 
+class SetCodec[T](inner: Codec[T]) extends Codec[Set[T]] {
+	def getEncoderClass: Class[Set[T]] = classOf[Set[T]]
+
+	def encode(writer: BsonWriter, it: Set[T], encoderContext: EncoderContext) {
+		writer.writeStartArray()
+		it.foreach(inner.encode(writer, _, encoderContext))
+		writer.writeEndArray()
+	}
+
+	def decode(reader: BsonReader, decoderContext: DecoderContext): Set[T] = {
+		reader.readStartArray()
+		val buffer = scala.collection.mutable.Buffer[T]()
+		while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
+			buffer.append(inner.decode(reader, decoderContext))
+		}
+		reader.readEndArray()
+		buffer.toSet
+	}
+}
+
 class MapCodec[V](inner: Codec[V]) extends Codec[Map[String, V]] {
   def getEncoderClass: Class[Map[String, V]] = classOf[Map[String, V]]
 
@@ -293,6 +313,11 @@ object CodecGen {
 
       def codecExpr: Tree = q"""new ai.snips.bsonmacros.SeqCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
     }
+	  case class SetField(inner: FieldType) extends FieldType {
+		  def tpe: c.universe.Type = appliedType(typeOf[Set[Any]].typeConstructor, List(inner.tpe))
+
+		  def codecExpr: Tree = q"""new ai.snips.bsonmacros.SetCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
+	  }
     case class MapField(inner: FieldType) extends FieldType {
       def tpe: c.universe.Type = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(typeOf[String], inner.tpe))
 
@@ -306,7 +331,9 @@ object CodecGen {
           SimpleField(outer)
         } else {
           if (outer.typeConstructor == typeOf[Seq[Any]].typeConstructor) {
-            SeqField(FieldType(inner.head))
+	          SeqField(FieldType(inner.head))
+          }else if (outer.typeConstructor == typeOf[Set[Any]].typeConstructor) {
+	          SetField(FieldType(inner.head))
           } else if (outer.typeConstructor == typeOf[Map[String, Any]].typeConstructor) {
             MapField(FieldType(inner(1)))
           } else {

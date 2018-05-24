@@ -185,4 +185,13 @@ class BsonMacrosTest extends FlatSpec with Matchers {
       fromDBObject[Shape](toDBObject(s)) shouldBe s
     }
   }
+
+	case class Quoppa(_id: BsonObjectId, a: Set[Int])
+
+	CodecGen[Quoppa](registry)
+	"Quoppa" should "have Set[Int] support" in {
+		val q = Quoppa(org.mongodb.scala.bson.BsonObjectId(), Set(1, 2, 3))
+		toDBObject(q) should be(BsonDocument("_id" -> q._id, "a" -> Seq(1, 2, 3)))
+		fromDBObject[Quoppa](toDBObject(q)) should be(q)
+	}
 }
