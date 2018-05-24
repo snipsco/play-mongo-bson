@@ -1,12 +1,14 @@
 package ai.snips.bsonmacros
 
 import java.time.Instant
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 import org.bson._
 import org.bson.codecs._
 import org.bson.codecs.configuration._
-import org.bson.codecs.{LongCodec => BsonLongCodec}
+import org.bson.codecs.{LongCodec => BsonLongCodec, ObjectIdCodec => BsonObjectIdCodec }
+import org.mongodb.scala.bson.ObjectId
 
 import scala.collection.concurrent
 import scala.language.experimental.macros
@@ -83,6 +85,34 @@ class InstantCodec extends Codec[Instant] {
   }
 }
 
+class ObjectIdCodec extends Codec[ObjectId] {
+	def getEncoderClass: Class[ObjectId] = classOf[ObjectId]
+
+	val inner = new BsonObjectIdCodec
+
+	def encode(writer: BsonWriter, it: ObjectId, encoderContext: EncoderContext) {
+		inner.encode(writer, it, encoderContext)
+	}
+
+	def decode(reader: BsonReader, decoderContext: DecoderContext): ObjectId = {
+		inner.decode(reader, decoderContext)
+	}
+}
+
+class UUIDCodec extends Codec[UUID] {
+	def getEncoderClass: Class[UUID] = classOf[UUID]
+
+	val inner = new UuidCodec
+
+	def encode(writer: BsonWriter, it: UUID, encoderContext: EncoderContext) {
+		inner.encode(writer, it, encoderContext)
+	}
+
+	def decode(reader: BsonReader, decoderContext: DecoderContext): UUID = {
+		inner.decode(reader, decoderContext)
+	}
+}
+
 class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] {
   def getEncoderClass: Class[Seq[T]] = classOf[Seq[T]]
 
@@ -156,7 +186,8 @@ class DynamicCodecRegistry extends CodecRegistry {
   val providedCodecs: CodecRegistry =
     CodecRegistries.fromRegistries(
       org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY,
-      CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new LongCodec, new InstantCodec, new BooleanCodec)
+      CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new LongCodec, new InstantCodec, new BooleanCodec,
+	      new UUIDCodec, new ObjectIdCodec)
     )
 
   val registered: concurrent.Map[Class[_], Codec[_]] =
