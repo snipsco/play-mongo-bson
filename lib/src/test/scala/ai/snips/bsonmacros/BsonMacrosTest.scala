@@ -1,6 +1,9 @@
 package ai.snips.bsonmacros
 
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId}
+import java.util.UUID
+
+import org.bson.types.ObjectId
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, ObjectId}
 import org.scalatest._
 
 class BsonMacrosTest extends FlatSpec with Matchers {
@@ -111,12 +114,14 @@ class BsonMacrosTest extends FlatSpec with Matchers {
     fromDBObject[Kappa](toDBObject(kappa1)) should be(kappa1)
   }
 
-  case class Lambda(_id: BsonObjectId, map: Map[String, Int])
+  case class Lambda(_id: BsonObjectId, map1: Map[String, Int], map2: Map[Int, Int])
 
   CodecGen[Lambda](registry)
-  "Lambda" should "have Map[String,Int] support" in {
-    val lambda1 = Lambda(org.mongodb.scala.bson.BsonObjectId(), Map("foo" -> 12, "bar" -> 42))
-    toDBObject(lambda1) should be(BsonDocument("_id" -> lambda1._id, "map" -> BsonDocument("foo" -> 12, "bar" -> 42)))
+  "Lambda" should "have Map[String,Int] and Map[Int,Int] support" in {
+    val lambda1 = Lambda(org.mongodb.scala.bson.BsonObjectId(), Map("foo" -> 12, "bar" -> 42), Map(1 -> 12, 2 -> 42))
+    toDBObject(lambda1) should be(BsonDocument("_id" -> lambda1._id,
+	    "map1" -> BsonDocument("foo" -> 12, "bar" -> 42),
+      "map2" -> BsonDocument("1" -> 12, "2" -> 42)))
     fromDBObject[Lambda](toDBObject(lambda1)) should be(lambda1)
   }
 
@@ -187,11 +192,19 @@ class BsonMacrosTest extends FlatSpec with Matchers {
   }
 
 	case class Quoppa(_id: BsonObjectId, a: Set[Int])
-
 	CodecGen[Quoppa](registry)
+
 	"Quoppa" should "have Set[Int] support" in {
 		val q = Quoppa(org.mongodb.scala.bson.BsonObjectId(), Set(1, 2, 3))
 		toDBObject(q) should be(BsonDocument("_id" -> q._id, "a" -> Seq(1, 2, 3)))
 		fromDBObject[Quoppa](toDBObject(q)) should be(q)
+	}
+
+	case class San(x: ObjectId, y: UUID)
+	CodecGen[San](registry)
+
+	"ObjectId and UUID" should "work" in {
+		val a = San(ObjectId.get(), UUID.randomUUID())
+		fromDBObject[San](toDBObject(a)) should be(a)
 	}
 }
