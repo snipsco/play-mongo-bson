@@ -136,7 +136,6 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 	    Map(Instant.now -> Instant.now, Instant.EPOCH -> Instant.EPOCH),
 	    Map(ObjectId.get() -> ObjectId.get(), ObjectId.get() -> ObjectId.get()),
 	    Map(UUID.randomUUID() -> UUID.randomUUID(), UUID.randomUUID() -> UUID.randomUUID()))
-	  println(toDBObject(lambda1))
     fromDBObject[Lambda](toDBObject(lambda1)) should be(lambda1)
   }
 
