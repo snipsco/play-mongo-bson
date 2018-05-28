@@ -7,11 +7,12 @@ import java.util.concurrent.ConcurrentHashMap
 import org.bson._
 import org.bson.codecs._
 import org.bson.codecs.configuration._
-import org.bson.codecs.{LongCodec => BsonLongCodec, ObjectIdCodec => BsonObjectIdCodec }
+import org.bson.codecs.{LongCodec => BsonLongCodec, ObjectIdCodec => BsonObjectIdCodec}
 import org.mongodb.scala.bson.ObjectId
 
 import scala.collection.concurrent
 import scala.language.experimental.macros
+import scala.reflect.ClassTag
 import scala.reflect.macros.whitebox
 import scala.util.Try
 
@@ -153,46 +154,56 @@ class SetCodec[T](inner: Codec[T]) extends Codec[Set[T]] {
 	}
 }
 
-class MapIntCodec[V](inner: Codec[V]) extends Codec[Map[Int, V]] {
-	def getEncoderClass: Class[Map[Int, V]] = classOf[Map[Int, V]]
+class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A]) extends Codec[Map[A, B]] {
 
-	def encode(writer: BsonWriter, it: Map[Int, V], encoderContext: EncoderContext) {
-		writer.writeStartDocument()
-		it.foreach { case (k, v) =>
-			writer.writeName(k.toString)
-			inner.encode(writer, v, encoderContext)
-		}
-		writer.writeEndDocument()
-	}
+	val StringClass = classOf[String]
+	val DoubleClass = classOf[Double]
+	val IntClass = classOf[Int]
+	val LongClass = classOf[Long]
+	val BooleanClass = classOf[Boolean]
+	val InstantClass = classOf[Instant]
+	val ObjectIdClass = classOf[ObjectId]
+	val UUIDClass = classOf[UUID]
 
-	def decode(reader: BsonReader, decoderContext: DecoderContext): Map[Int, V] = {
-		reader.readStartDocument()
-		val buffer = scala.collection.mutable.Buffer[(Int, V)]()
-		while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
-			buffer.append((reader.readName.toInt, inner.decode(reader, decoderContext)))
-		}
-		reader.readEndDocument()
-		buffer.toMap
-	}
-}
+  def getEncoderClass: Class[Map[A, B]] = classOf[Map[A, B]]
 
-class MapStringCodec[V](inner: Codec[V]) extends Codec[Map[String, V]] {
-  def getEncoderClass: Class[Map[String, V]] = classOf[Map[String, V]]
-
-  def encode(writer: BsonWriter, it: Map[String, V], encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Map[A, B], encoderContext: EncoderContext) {
     writer.writeStartDocument()
     it.foreach { case (k, v) =>
-      writer.writeName(k)
+	    val str = k match {
+		    case s: String => s
+		    case d: Double => d.toString
+		    case i: Int => i.toString
+		    case l: Long => l.toString
+		    case b: Boolean => b.toString
+		    case it: Instant => it.toEpochMilli.toString
+		    case o: ObjectId => o.toHexString
+		    case u: UUID => u.toString
+				case _ => throw new RuntimeException("Type not supported as Map key.")
+	    }
+      writer.writeName(str)
       inner.encode(writer, v, encoderContext)
     }
     writer.writeEndDocument()
   }
 
-  def decode(reader: BsonReader, decoderContext: DecoderContext): Map[String, V] = {
+  def decode(reader: BsonReader, decoderContext: DecoderContext): Map[A, B] = {
     reader.readStartDocument()
-    val buffer = scala.collection.mutable.Buffer[(String, V)]()
+    val buffer = scala.collection.mutable.Buffer[(A, B)]()
     while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
-      buffer.append((reader.readName, inner.decode(reader, decoderContext)))
+	    val name = reader.readName
+	    val obj = ct.runtimeClass match {
+		    case StringClass => name
+		    case DoubleClass => name.toDouble
+		    case IntClass => name.toInt
+		    case LongClass => name.toLong
+		    case BooleanClass => name.toBoolean
+		    case InstantClass => Instant.ofEpochMilli(name.toLong)
+		    case ObjectIdClass => new ObjectId(name)
+		    case UUIDClass => UUID.fromString(name)
+		    case _ => throw new RuntimeException("Type not supported as Map key.")
+	    }
+      buffer.append((obj.asInstanceOf[A], inner.decode(reader, decoderContext).asInstanceOf[B]))
     }
     reader.readEndDocument()
     buffer.toMap
@@ -389,7 +400,7 @@ object CodecGen {
         q"""$registry.get(classOf[${tpe.typeSymbol}]).asInstanceOf[Codec[Any]]"""
       }
     }
-    case class SeqField(inner: FieldType) extends FieldType {
+	  case class SeqField(inner: FieldType) extends FieldType {
       def tpe: c.universe.Type = appliedType(typeOf[Seq[Any]].typeConstructor, List(inner.tpe))
 
       def codecExpr: Tree = q"""new ai.snips.bsonmacros.SeqCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
@@ -399,15 +410,10 @@ object CodecGen {
 
 		  def codecExpr: Tree = q"""new ai.snips.bsonmacros.SetCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
 	  }
-	  case class MapIntField(inner: FieldType) extends FieldType {
-		  def tpe: c.universe.Type = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(typeOf[Int], inner.tpe))
+    case class MapField(key: FieldType, value: FieldType) extends FieldType {
+      def tpe: c.universe.Type = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(key.tpe, value.tpe))
 
-		  def codecExpr: Tree = q"""new ai.snips.bsonmacros.MapIntCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
-	  }
-    case class MapStringField(inner: FieldType) extends FieldType {
-      def tpe: c.universe.Type = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(typeOf[String], inner.tpe))
-
-      def codecExpr: Tree = q"""new ai.snips.bsonmacros.MapStringCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
+      def codecExpr: Tree = q"""new ai.snips.bsonmacros.MapCodec[${key.tpe},${value.tpe}](${value.codecExpr}).asInstanceOf[Codec[Any]]"""
     }
 	  case class EitherField(innerA: FieldType, innerB: FieldType) extends FieldType {
 		  def tpe: c.universe.Type = appliedType(typeOf[Either[Any, Any]].typeConstructor, List(innerA.tpe, innerB.tpe))
@@ -428,12 +434,8 @@ object CodecGen {
 	        } else if (outer.typeConstructor == typeOf[Either[Any, Any]].typeConstructor) {
 		        EitherField(FieldType(inner.head), FieldType(inner(1)))
           } else if (outer.typeConstructor == typeOf[Map[Any, Any]].typeConstructor) {
-	          if (inner.head == typeOf[Int]) {
-		          MapIntField(FieldType(inner(1)))
-	          }else {
-		          MapStringField(FieldType(inner(1)))
-	          }
-	        } else {
+	          MapField(FieldType(inner.head), FieldType(inner(1)))
+		      } else {
             throw new RuntimeException("Unsupported generic type mapping " + outer)
           }
         }

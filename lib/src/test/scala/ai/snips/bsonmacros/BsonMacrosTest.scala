@@ -1,5 +1,6 @@
 package ai.snips.bsonmacros
 
+import java.time.Instant
 import java.util.UUID
 
 import org.bson.types.ObjectId
@@ -114,14 +115,27 @@ class BsonMacrosTest extends FlatSpec with Matchers {
     fromDBObject[Kappa](toDBObject(kappa1)) should be(kappa1)
   }
 
-  case class Lambda(_id: BsonObjectId, map1: Map[String, Int], map2: Map[Int, Int])
+  case class Lambda(_id: BsonObjectId,
+                    map1: Map[String, String],
+                    map2: Map[Int, Int],
+                    map3: Map[Long, Long],
+                    map4: Map[Double, Double],
+                    map5: Map[Boolean, Boolean],
+                    map6: Map[Instant, Instant],
+                    map7: Map[ObjectId, ObjectId],
+                    map8: Map[UUID, UUID])
 
   CodecGen[Lambda](registry)
-  "Lambda" should "have Map[String,Int] and Map[Int,Int] support" in {
-    val lambda1 = Lambda(org.mongodb.scala.bson.BsonObjectId(), Map("foo" -> 12, "bar" -> 42), Map(1 -> 12, 2 -> 42))
-    toDBObject(lambda1) should be(BsonDocument("_id" -> lambda1._id,
-	    "map1" -> BsonDocument("foo" -> 12, "bar" -> 42),
-      "map2" -> BsonDocument("1" -> 12, "2" -> 42)))
+  "Lambda" should "have Map support" in {
+    val lambda1 = Lambda(org.mongodb.scala.bson.BsonObjectId(),
+	    Map("foo1" -> "bar1", "foo2" -> "bar2"),
+	    Map(1 -> 12, 2 -> 42),
+	    Map(1L -> 12L, 2L -> 42L),
+	    Map(1.0 -> 1.0, 2.0 -> 2.0),
+	    Map(true -> true, false -> false),
+	    Map(Instant.now -> Instant.now, Instant.EPOCH -> Instant.EPOCH),
+	    Map(ObjectId.get() -> ObjectId.get(), ObjectId.get() -> ObjectId.get()),
+	    Map(UUID.randomUUID() -> UUID.randomUUID(), UUID.randomUUID() -> UUID.randomUUID()))
     fromDBObject[Lambda](toDBObject(lambda1)) should be(lambda1)
   }
 

@@ -85,8 +85,7 @@ Supported types
  - `Either[_,_]`
  - `Seq[_]`
  - `Set[_]`
- - `Map[Int, _]`
- - `Map[String, _]`
+ - `Map[_,_]`
  - Simple monomorphic and non recursive ADTs
 
 ```
