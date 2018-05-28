@@ -199,6 +199,33 @@ class MapStringCodec[V](inner: Codec[V]) extends Codec[Map[String, V]] {
   }
 }
 
+class EitherCodec[A, B](innerA: Codec[A], innerB: Codec[B]) extends Codec[Either[A, B]] {
+	def getEncoderClass: Class[Either[A, B]] = classOf[Either[A, B]]
+
+	def encode(writer: BsonWriter, it: Either[A, B], encoderContext: EncoderContext) {
+		writer.writeStartDocument()
+		it match {
+			case Left(x) =>
+				writer.writeName("left")
+				innerA.encode(writer, x, encoderContext)
+			case Right(x) =>
+				writer.writeName("right")
+				innerB.encode(writer, x, encoderContext)
+		}
+		writer.writeEndDocument()
+	}
+
+	def decode(reader: BsonReader, decoderContext: DecoderContext): Either[A, B] = {
+		reader.readStartDocument()
+		val result = reader.readName match {
+			case "left" => Left(innerA.decode(reader, decoderContext))
+			case "right" => Right(innerB.decode(reader, decoderContext))
+		}
+		reader.readEndDocument()
+		result
+	}
+}
+
 class ExistentialCodec[T](v: T) extends Codec[T] {
   override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext) {}
 
@@ -382,6 +409,11 @@ object CodecGen {
 
       def codecExpr: Tree = q"""new ai.snips.bsonmacros.MapStringCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
     }
+	  case class EitherField(innerA: FieldType, innerB: FieldType) extends FieldType {
+		  def tpe: c.universe.Type = appliedType(typeOf[Either[Any, Any]].typeConstructor, List(innerA.tpe, innerB.tpe))
+
+		  def codecExpr: Tree = q"""new ai.snips.bsonmacros.EitherCodec(${innerA.codecExpr}, ${innerB.codecExpr}).asInstanceOf[Codec[Any]]"""
+	  }
 
     object FieldType {
       def apply(outer: Type): FieldType = {
@@ -393,6 +425,8 @@ object CodecGen {
 	          SeqField(FieldType(inner.head))
           }else if (outer.typeConstructor == typeOf[Set[Any]].typeConstructor) {
 	          SetField(FieldType(inner.head))
+	        } else if (outer.typeConstructor == typeOf[Either[Any, Any]].typeConstructor) {
+		        EitherField(FieldType(inner.head), FieldType(inner(1)))
           } else if (outer.typeConstructor == typeOf[Map[Any, Any]].typeConstructor) {
 	          if (inner.head == typeOf[Int]) {
 		          MapIntField(FieldType(inner(1)))

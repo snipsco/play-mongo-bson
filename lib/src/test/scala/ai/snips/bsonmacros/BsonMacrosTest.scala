@@ -207,4 +207,18 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 		val a = San(ObjectId.get(), UUID.randomUUID())
 		fromDBObject[San](toDBObject(a)) should be(a)
 	}
+
+
+	case class Rho(_id: BsonObjectId, value: Either[String, Int])
+
+	CodecGen[Rho](registry)
+	"Rho" should "support Either[String, Int]" in {
+		val left = Rho(org.mongodb.scala.bson.BsonObjectId(), Left("string"))
+		toDBObject(left) shouldBe BsonDocument("_id" -> left._id, "value" -> BsonDocument("left" -> "string"))
+		fromDBObject[Rho](toDBObject(left)) should be(left)
+
+		val right = Rho(org.mongodb.scala.bson.BsonObjectId(), Right(42))
+		toDBObject(right) shouldBe BsonDocument("_id" -> right._id, "value" -> BsonDocument("right" -> 42))
+		fromDBObject[Rho](toDBObject(right)) should be(right)
+	}
 }
