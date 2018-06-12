@@ -12,7 +12,7 @@ import org.mongodb.scala.bson.ObjectId
 
 import scala.collection.concurrent
 import scala.language.experimental.macros
-import scala.reflect.{ classTag, ClassTag }
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.reflect.macros.whitebox
 import scala.util.Try

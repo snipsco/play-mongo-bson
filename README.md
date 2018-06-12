@@ -86,6 +86,7 @@ Supported types
  - `Either[_,_]`
  - `Seq[_]`
  - `Set[_]`
+ - `List[_]`
  - `Map[_,_]`
  - Simple monomorphic and non recursive ADTs
 
