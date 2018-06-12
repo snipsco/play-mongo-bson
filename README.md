@@ -80,6 +80,7 @@ Supported types
  - `Double`
  - `ObjectId`
  - `UUID`
+ - `Enumeration`
  - `java.time.Instant`
  - `Option[_]`
  - `Either[_,_]`
