@@ -12,7 +12,8 @@ import org.mongodb.scala.bson.ObjectId
 
 import scala.collection.concurrent
 import scala.language.experimental.macros
-import scala.reflect.ClassTag
+import scala.reflect.{ classTag, ClassTag }
+import scala.reflect.runtime.universe._
 import scala.reflect.macros.whitebox
 import scala.util.Try
 
@@ -114,6 +115,20 @@ class UUIDCodec extends Codec[UUID] {
 	}
 }
 
+class EnumerationCodec[T](implicit ct: ClassTag[T], tt: TypeTag[T]) extends Codec[T] {
+	def getEncoderClass: Class[T] = ct.runtimeClass.asInstanceOf[Class[T]]
+
+	val inner = new StringCodec
+
+	def encode(writer: BsonWriter, it: T, encoderContext: EncoderContext) {
+		inner.encode(writer, it.toString, encoderContext)
+	}
+
+	def decode(reader: BsonReader, decoderContext: DecoderContext): T = {
+		reflectEnum[T](inner.decode(reader, decoderContext))
+	}
+}
+
 class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] {
   def getEncoderClass: Class[Seq[T]] = classOf[Seq[T]]
 
@@ -154,7 +169,27 @@ class SetCodec[T](inner: Codec[T]) extends Codec[Set[T]] {
 	}
 }
 
-class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A]) extends Codec[Map[A, B]] {
+class ListCodec[T](inner: Codec[T]) extends Codec[List[T]] {
+	def getEncoderClass: Class[List[T]] = classOf[List[T]]
+
+	def encode(writer: BsonWriter, it: List[T], encoderContext: EncoderContext) {
+		writer.writeStartArray()
+		it.foreach(inner.encode(writer, _, encoderContext))
+		writer.writeEndArray()
+	}
+
+	def decode(reader: BsonReader, decoderContext: DecoderContext): List[T] = {
+		reader.readStartArray()
+		val buffer = scala.collection.mutable.Buffer[T]()
+		while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
+			buffer.append(inner.decode(reader, decoderContext))
+		}
+		reader.readEndArray()
+		buffer.toList
+	}
+}
+
+class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A], tt: TypeTag[A]) extends Codec[Map[A, B]] {
 
 	val StringClass = classOf[String]
 	val DoubleClass = classOf[Double]
@@ -164,6 +199,7 @@ class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A]) extends Codec[
 	val InstantClass = classOf[Instant]
 	val ObjectIdClass = classOf[ObjectId]
 	val UUIDClass = classOf[UUID]
+	val EnumClass = classOf[Enumeration#Value]
 
   def getEncoderClass: Class[Map[A, B]] = classOf[Map[A, B]]
 
@@ -179,6 +215,7 @@ class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A]) extends Codec[
 		    case it: Instant => it.toEpochMilli.toString
 		    case o: ObjectId => o.toHexString
 		    case u: UUID => u.toString
+		    case e: scala.Enumeration#Value => e.toString
 				case _ => throw new RuntimeException("Type not supported as Map key.")
 	    }
       writer.writeName(str)
@@ -201,6 +238,7 @@ class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A]) extends Codec[
 		    case InstantClass => Instant.ofEpochMilli(name.toLong)
 		    case ObjectIdClass => new ObjectId(name)
 		    case UUIDClass => UUID.fromString(name)
+				case EnumClass => reflectEnum[A](name)
 		    case _ => throw new RuntimeException("Type not supported as Map key.")
 	    }
       buffer.append((obj.asInstanceOf[A], inner.decode(reader, decoderContext).asInstanceOf[B]))
@@ -400,6 +438,9 @@ object CodecGen {
         q"""$registry.get(classOf[${tpe.typeSymbol}]).asInstanceOf[Codec[Any]]"""
       }
     }
+	  case class EnumerationField(tpe: Type) extends FieldType {
+		  def codecExpr: Tree = q"""new ai.snips.bsonmacros.EnumerationCodec[$tpe]().asInstanceOf[Codec[Any]]"""
+	  }
 	  case class SeqField(inner: FieldType) extends FieldType {
       def tpe: c.universe.Type = appliedType(typeOf[Seq[Any]].typeConstructor, List(inner.tpe))
 
@@ -409,6 +450,11 @@ object CodecGen {
 		  def tpe: c.universe.Type = appliedType(typeOf[Set[Any]].typeConstructor, List(inner.tpe))
 
 		  def codecExpr: Tree = q"""new ai.snips.bsonmacros.SetCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
+	  }
+	  case class ListField(inner: FieldType) extends FieldType {
+		  def tpe: c.universe.Type = appliedType(typeOf[List[Any]].typeConstructor, List(inner.tpe))
+
+		  def codecExpr: Tree = q"""new ai.snips.bsonmacros.ListCodec(${inner.codecExpr}).asInstanceOf[Codec[Any]]"""
 	  }
     case class MapField(key: FieldType, value: FieldType) extends FieldType {
       def tpe: c.universe.Type = appliedType(typeOf[Map[Any, Any]].typeConstructor, List(key.tpe, value.tpe))
@@ -424,13 +470,19 @@ object CodecGen {
     object FieldType {
       def apply(outer: Type): FieldType = {
         val TypeRef(_, _, inner) = outer
-        if (inner.isEmpty) {
-          SimpleField(outer)
-        } else {
-          if (outer.typeConstructor == typeOf[Seq[Any]].typeConstructor) {
-	          SeqField(FieldType(inner.head))
+	      if (inner.isEmpty) {
+          if (outer <:< typeOf[Enumeration#Value]) {
+	          EnumerationField(outer)
+		      }else{
+	          SimpleField(outer)
+          }
+	      } else {
+	        if (outer.typeConstructor == typeOf[Seq[Any]].typeConstructor) {
+		        SeqField(FieldType(inner.head))
           }else if (outer.typeConstructor == typeOf[Set[Any]].typeConstructor) {
 	          SetField(FieldType(inner.head))
+	        }else if (outer.typeConstructor == typeOf[List[Any]].typeConstructor) {
+		        ListField(FieldType(inner.head))
 	        } else if (outer.typeConstructor == typeOf[Either[Any, Any]].typeConstructor) {
 		        EitherField(FieldType(inner.head), FieldType(inner(1)))
           } else if (outer.typeConstructor == typeOf[Map[Any, Any]].typeConstructor) {
