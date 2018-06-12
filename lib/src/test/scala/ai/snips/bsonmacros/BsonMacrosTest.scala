@@ -6,6 +6,7 @@ import java.util.UUID
 import org.bson.types.ObjectId
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, ObjectId}
 import org.scalatest._
+import TauEnum.TauEnum
 
 class BsonMacrosTest extends FlatSpec with Matchers {
 
@@ -214,15 +215,6 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 		fromDBObject[Quoppa](toDBObject(q)) should be(q)
 	}
 
-	case class San(x: ObjectId, y: UUID)
-	CodecGen[San](registry)
-
-	"ObjectId and UUID" should "work" in {
-		val a = San(ObjectId.get(), UUID.randomUUID())
-		fromDBObject[San](toDBObject(a)) should be(a)
-	}
-
-
 	case class Rho(_id: BsonObjectId, value: Either[String, Int])
 
 	CodecGen[Rho](registry)
@@ -234,5 +226,29 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 		val right = Rho(org.mongodb.scala.bson.BsonObjectId(), Right(42))
 		toDBObject(right) shouldBe BsonDocument("_id" -> right._id, "value" -> BsonDocument("right" -> 42))
 		fromDBObject[Rho](toDBObject(right)) should be(right)
+	}
+
+	case class San(x: ObjectId, y: UUID)
+	CodecGen[San](registry)
+
+	"ObjectId and UUID" should "work" in {
+		val a = San(ObjectId.get(), UUID.randomUUID())
+		fromDBObject[San](toDBObject(a)) should be(a)
+	}
+
+	case class Tau(_id: BsonObjectId, a: Map[TauEnum, String], b: TauEnum, c: Seq[TauEnum])
+
+	CodecGen[Tau](registry)
+	"Tau" should "support Enumeration" in {
+		val enum = Tau(org.mongodb.scala.bson.BsonObjectId(), Map(TauEnum.One -> "One"), TauEnum.Two, Seq(TauEnum.Two))
+		fromDBObject[Tau](toDBObject(enum)) should be(enum)
+	}
+
+	case class Upsilon(_id: BsonObjectId, a: List[String], b: List[Int])
+
+	CodecGen[Upsilon](registry)
+	"Upsilon" should "support List" in {
+		val a = Upsilon(org.mongodb.scala.bson.BsonObjectId(), List("One", "Two", "Three"), List(1, 2, 3))
+		fromDBObject[Upsilon](toDBObject(a)) should be(a)
 	}
 }
