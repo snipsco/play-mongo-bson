@@ -13,8 +13,8 @@ package object bsonmacros {
 
 	def reflectEnum[T: TypeTag](name: String): T = {
 		typeOf[T] match {
-			case valueType @ TypeRef(enumType, _, _) =>
-				val methodSymbol = enumType.member(newTermName("withName")).asMethod
+			case TypeRef(enumType, _, _) =>
+				val methodSymbol = enumType.member(TermName("withName")).asMethod
 				val moduleSymbol = enumType.termSymbol.asModule
 				reflect(moduleSymbol, methodSymbol)(name).asInstanceOf[T]
 		}
