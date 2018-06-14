@@ -129,64 +129,40 @@ class EnumerationCodec[T](implicit ct: ClassTag[T], tt: TypeTag[T]) extends Code
 	}
 }
 
-class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] {
+trait IterableCodec[T] {
+	def encodeIterable(inner: Codec[T], writer: BsonWriter, it: Iterable[T], encoderContext: EncoderContext) {
+		writer.writeStartArray()
+		it.foreach(inner.encode(writer, _, encoderContext))
+		writer.writeEndArray()
+	}
+
+	def decodeIterable(inner: Codec[T], reader: BsonReader, decoderContext: DecoderContext): Iterable[T] = {
+		reader.readStartArray()
+		val buffer = scala.collection.mutable.Buffer[T]()
+		while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
+			buffer.append(inner.decode(reader, decoderContext))
+		}
+		reader.readEndArray()
+		buffer
+	}
+}
+
+class SeqCodec[T](inner: Codec[T]) extends Codec[Seq[T]] with IterableCodec[T] {
   def getEncoderClass: Class[Seq[T]] = classOf[Seq[T]]
-
-  def encode(writer: BsonWriter, it: Seq[T], encoderContext: EncoderContext) {
-    writer.writeStartArray()
-    it.foreach(inner.encode(writer, _, encoderContext))
-    writer.writeEndArray()
-  }
-
-  def decode(reader: BsonReader, decoderContext: DecoderContext): Seq[T] = {
-    reader.readStartArray()
-    val buffer = scala.collection.mutable.Buffer[T]()
-    while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
-      buffer.append(inner.decode(reader, decoderContext))
-    }
-    reader.readEndArray()
-    buffer
-  }
+  def encode(writer: BsonWriter, it: Seq[T], encoderContext: EncoderContext): Unit = encodeIterable(inner, writer, it, encoderContext)
+  def decode(reader: BsonReader, decoderContext: DecoderContext): Seq[T] = decodeIterable(inner, reader, decoderContext).toSeq
 }
 
-class SetCodec[T](inner: Codec[T]) extends Codec[Set[T]] {
+class SetCodec[T](inner: Codec[T]) extends Codec[Set[T]] with IterableCodec[T] {
 	def getEncoderClass: Class[Set[T]] = classOf[Set[T]]
-
-	def encode(writer: BsonWriter, it: Set[T], encoderContext: EncoderContext) {
-		writer.writeStartArray()
-		it.foreach(inner.encode(writer, _, encoderContext))
-		writer.writeEndArray()
-	}
-
-	def decode(reader: BsonReader, decoderContext: DecoderContext): Set[T] = {
-		reader.readStartArray()
-		val buffer = scala.collection.mutable.Buffer[T]()
-		while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
-			buffer.append(inner.decode(reader, decoderContext))
-		}
-		reader.readEndArray()
-		buffer.toSet
-	}
+	def encode(writer: BsonWriter, it: Set[T], encoderContext: EncoderContext): Unit = encodeIterable(inner, writer, it, encoderContext)
+	def decode(reader: BsonReader, decoderContext: DecoderContext): Set[T] = decodeIterable(inner, reader, decoderContext).toSet
 }
 
-class ListCodec[T](inner: Codec[T]) extends Codec[List[T]] {
+class ListCodec[T](inner: Codec[T]) extends Codec[List[T]] with IterableCodec[T] {
 	def getEncoderClass: Class[List[T]] = classOf[List[T]]
-
-	def encode(writer: BsonWriter, it: List[T], encoderContext: EncoderContext) {
-		writer.writeStartArray()
-		it.foreach(inner.encode(writer, _, encoderContext))
-		writer.writeEndArray()
-	}
-
-	def decode(reader: BsonReader, decoderContext: DecoderContext): List[T] = {
-		reader.readStartArray()
-		val buffer = scala.collection.mutable.Buffer[T]()
-		while (reader.readBsonType != BsonType.END_OF_DOCUMENT) {
-			buffer.append(inner.decode(reader, decoderContext))
-		}
-		reader.readEndArray()
-		buffer.toList
-	}
+	def encode(writer: BsonWriter, it: List[T], encoderContext: EncoderContext): Unit = encodeIterable(inner, writer, it, encoderContext)
+	def decode(reader: BsonReader, decoderContext: DecoderContext): List[T] = decodeIterable(inner, reader, decoderContext).toList
 }
 
 class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A], tt: TypeTag[A]) extends Codec[Map[A, B]] {
