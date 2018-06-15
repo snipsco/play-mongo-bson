@@ -35,8 +35,8 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   ...
-  "ai.snips" %% "play-mongo-bson" % "0.5",
-  "org.mongodb.scala" %% "mongo-scala-driver" % "2.1.0"
+  "ai.snips" %% "play-mongo-bson" % "0.5.1",
+  "org.mongodb.scala" %% "mongo-scala-driver" % "2.2.1"
 )
 ```
 
