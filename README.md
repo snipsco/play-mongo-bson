@@ -36,7 +36,7 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   ...
   "ai.snips" %% "play-mongo-bson" % "0.5.1",
-  "org.mongodb.scala" %% "mongo-scala-driver" % "2.2.1"
+  "org.mongodb.scala" %% "mongo-scala-driver" % "2.6.0"
 )
 ```
 
@@ -109,8 +109,7 @@ Publishing release
 ```
 export SONATYPE_USERNAME=...
 export SONATYPE_PASSWORD=...
-cd lib
-bin/activator release
+sbt "project lib" release
 ```
 
 This will publish artifacts in release and create a new snapshot.

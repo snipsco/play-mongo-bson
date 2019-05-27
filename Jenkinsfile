@@ -1,6 +1,8 @@
 node('jenkins-slave-generic') {
 
-    def sbtExtras = "/home/shared/play-mongo-bson/.sbt-extras/sbt"
+    def jenkinsHome = "/home/shared/play-mongo-bson"
+    def sbtExtras = "$jenkinsHome/.sbt-extras/sbt"
+    def sbtParams = "-Dsbt.log.noformat=true -Dsbt.ivy.home=$jenkinsHome/.sbt_ivy2 -Divy-home=$jenkinsHome/.ivy2"
 
     stage('Checkout') {
         checkout scm
@@ -13,19 +15,19 @@ node('jenkins-slave-generic') {
     }
 
     stage('Lib: test') {
-        sh "cd lib; $sbtExtras -Dsbt.log.noformat=true -Dsbt.ivy.home=/home/shared/play-mongo-bson/.sbt_ivy2 -Divy-home=/home/shared/play-mongo-bson/.ivy2 clean test"
+        sh "$sbtExtras $sbtParams 'project lib' clean test"
 
         echo 'Archiving Tests Report'
         junit '**/test-reports/*.xml'
     }
 
-    stage('Lib: deploy snapshot') {
-        if (env.BRANCH_NAME == "master") {
-            sh "cd lib; $sbtExtras -Dsbt.log.noformat=true -Dsbt.ivy.home=/home/shared/play-mongo-bson/.sbt_ivy2 -Divy-home=/home/shared/play-mongo-bson/.ivy2 publish"
-        }
+    stage('Sample: compile') {
+        sh "$sbtExtras $sbtParams 'project sample' clean compile"
     }
 
-    stage('Sample: compile') {
-        sh "cd sample; $sbtExtras -Dsbt.log.noformat=true -Dsbt.ivy.home=/home/shared/play-mongo-bson/.sbt_ivy2 -Divy-home=/home/shared/play-mongo-bson/.ivy2 clean compile"
+    stage('Lib: deploy snapshot') {
+        if (env.BRANCH_NAME == "master") {
+            sh "$sbtExtras $sbtParams 'project lib' publish"
+        }
     }
 }

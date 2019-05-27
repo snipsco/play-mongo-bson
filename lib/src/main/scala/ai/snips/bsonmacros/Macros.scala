@@ -167,15 +167,15 @@ class ListCodec[T](inner: Codec[T]) extends Codec[List[T]] with IterableCodec[T]
 
 class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A], tt: TypeTag[A]) extends Codec[Map[A, B]] {
 
-	val StringClass = classOf[String]
-	val DoubleClass = classOf[Double]
-	val IntClass = classOf[Int]
-	val LongClass = classOf[Long]
-	val BooleanClass = classOf[Boolean]
-	val InstantClass = classOf[Instant]
-	val ObjectIdClass = classOf[ObjectId]
-	val UUIDClass = classOf[UUID]
-	val EnumClass = classOf[Enumeration#Value]
+	private val StringClass = classOf[String]
+	private val DoubleClass = classOf[Double]
+	private val IntClass = classOf[Int]
+	private val LongClass = classOf[Long]
+	private val BooleanClass = classOf[Boolean]
+	private val InstantClass = classOf[Instant]
+	private val ObjectIdClass = classOf[ObjectId]
+	private val UUIDClass = classOf[UUID]
+	private val EnumClass = classOf[Enumeration#Value]
 
   def getEncoderClass: Class[Map[A, B]] = classOf[Map[A, B]]
 
@@ -476,7 +476,7 @@ object CodecGen {
       val ftpe = tpe.decl(field.name).typeSignature.resultType
       val isOption = ftpe.typeConstructor == typeOf[Option[_]].typeConstructor
       val deoptioned: Type = if (isOption) {
-        val TypeRef(_, _, inner) = ftpe;
+        val TypeRef(_, _, inner) = ftpe
         inner.head
       } else ftpe
       Field(name, isOption, FieldType(deoptioned))

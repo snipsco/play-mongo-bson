@@ -53,7 +53,7 @@ abstract class BaseDAO[DO](implicit ct: ClassTag[DO],
 
   def upsertOne(it: DO): Future[_] =
     collection.replaceOne(byIdSelector(getId(it)), it,
-      UpdateOptions().upsert(true)).toFuture
+      ReplaceOptions().upsert(true)).toFuture
 
   def all: FindObservable[DO] = collection.find()
 
