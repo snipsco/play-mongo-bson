@@ -251,4 +251,11 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 		val a = Upsilon(org.mongodb.scala.bson.BsonObjectId(), List("One", "Two", "Three"), List(1, 2, 3))
 		fromDBObject[Upsilon](toDBObject(a)) should be(a)
 	}
+
+  case class Phi(name: String)
+  CodecGen[Phi](registry)
+
+  "Phi" should "handle missing field (and produce a DEBUG log)" in {
+    fromDBObject[Phi](toDBObject(BsonDocument("name" -> "foo", "other" -> "bar"))) should be(Phi("foo"))
+  }
 }
