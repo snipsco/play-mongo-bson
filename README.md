@@ -23,7 +23,7 @@ between languages constantly.
 build.sbt
 ---------
 
-Import play-mongo-bson in your project. Only Scala 2.12 is supported.
+Import play-mongo-bson in your project. Only Scala 2.12 and 2.13 is supported.
 
 You will need to provide also Scala mongo driver.
 
