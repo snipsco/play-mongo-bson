@@ -8,6 +8,8 @@ import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, ObjectId}
 import org.scalatest._
 import TauEnum.TauEnum
 
+import java.time.temporal.ChronoUnit.MILLIS
+
 class BsonMacrosTest extends FlatSpec with Matchers {
 
   implicit val registry: DynamicCodecRegistry = new DynamicCodecRegistry
@@ -134,7 +136,7 @@ class BsonMacrosTest extends FlatSpec with Matchers {
 	    Map(1L -> 12L, 2L -> 42L),
 	    Map(1.0 -> 1.0, 2.0 -> 2.0),
 	    Map(true -> true, false -> false),
-	    Map(Instant.now -> Instant.now, Instant.EPOCH -> Instant.EPOCH),
+	    Map(Instant.now.truncatedTo(MILLIS) -> Instant.now.truncatedTo(MILLIS), Instant.EPOCH -> Instant.EPOCH),
 	    Map(ObjectId.get() -> ObjectId.get(), ObjectId.get() -> ObjectId.get()),
 	    Map(UUID.randomUUID() -> UUID.randomUUID(), UUID.randomUUID() -> UUID.randomUUID()))
     fromDBObject[Lambda](toDBObject(lambda1)) should be(lambda1)

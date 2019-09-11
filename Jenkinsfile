@@ -27,7 +27,7 @@ node('jenkins-slave-generic') {
 
     stage('Lib: deploy snapshot') {
         if (env.BRANCH_NAME == "master") {
-            sh "$sbtExtras $sbtParams 'project lib' publish"
+            sh "$sbtExtras $sbtParams +publish"
         }
     }
 }
