@@ -15,14 +15,14 @@ node('jenkins-slave-generic') {
     }
 
     stage('Lib: test') {
-        sh "$sbtExtras $sbtParams 'project lib' clean test"
+        sh "$sbtExtras $sbtParams 'project lib' clean +test"
 
         echo 'Archiving Tests Report'
         junit '**/test-reports/*.xml'
     }
 
     stage('Sample: compile') {
-        sh "$sbtExtras $sbtParams 'project sample' clean compile"
+        sh "$sbtExtras $sbtParams 'project sample' clean +compile"
     }
 
     stage('Lib: deploy snapshot') {
