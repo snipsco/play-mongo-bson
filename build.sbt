@@ -1,4 +1,7 @@
-scalaVersion in ThisBuild := "2.12.8"
+val scala212 = "2.12.9"
+val scala213 = "2.13.0"
+
+scalaVersion in ThisBuild := scala213
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 
 lazy val `play-mongo-bson` = (project in file("."))
@@ -9,11 +12,12 @@ lazy val lib = (project in file("lib")).settings(
   name := """play-mongo-bson""",
   organization := "ai.snips",
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %% "play" % "2.7.2" % Provided,
-    "org.mongodb.scala" %% "mongo-scala-driver" % "2.6.0" % Provided,
-    "org.scalatest" %% "scalatest" % "3.0.7" % Test,
+    "com.typesafe.play" %% "play" % "2.7.3" % Provided,
+    "org.mongodb.scala" %% "mongo-scala-driver" % "2.7.0" % Provided,
+    "org.scalatest" %% "scalatest" % "3.0.8" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   ),
+  crossScalaVersions := Seq(scala213, scala212),
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
@@ -62,6 +66,7 @@ lazy val sample = (project in file("sample")).enablePlugins(PlayScala).settings(
   name := """sample""",
   libraryDependencies ++= Seq(
     guice,
-    "org.mongodb.scala" %% "mongo-scala-driver" % "2.6.0"
-  )
+    "org.mongodb.scala" %% "mongo-scala-driver" % "2.7.0"
+  ),
+  publishArtifact := false
 ).dependsOn(lib)

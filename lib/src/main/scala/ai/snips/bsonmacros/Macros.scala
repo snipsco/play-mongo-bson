@@ -21,7 +21,7 @@ class DoubleCodec extends Codec[Double] {
 
   val inner = new BsonDoubleCodec
 
-  def encode(writer: BsonWriter, it: Double, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Double, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, new BsonDouble(it), encoderContext)
   }
 
@@ -35,7 +35,7 @@ class IntCodec extends Codec[Int] {
 
   val inner = new IntegerCodec
 
-  def encode(writer: BsonWriter, it: Int, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Int, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, it, encoderContext)
   }
 
@@ -49,7 +49,7 @@ class LongCodec extends Codec[Long] {
 
   val inner = new BsonLongCodec
 
-  def encode(writer: BsonWriter, it: Long, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Long, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, it, encoderContext)
   }
 
@@ -63,7 +63,7 @@ class BooleanCodec extends Codec[Boolean] {
 
   val inner = new org.bson.codecs.BooleanCodec
 
-  def encode(writer: BsonWriter, it: Boolean, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Boolean, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, it, encoderContext)
   }
 
@@ -77,7 +77,7 @@ class InstantCodec extends Codec[Instant] {
 
   val inner = new BsonDateTimeCodec
 
-  def encode(writer: BsonWriter, it: Instant, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Instant, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, new BsonDateTime(it.toEpochMilli), encoderContext)
   }
 
@@ -91,7 +91,7 @@ class ObjectIdCodec extends Codec[ObjectId] {
 
   val inner = new BsonObjectIdCodec
 
-  def encode(writer: BsonWriter, it: ObjectId, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: ObjectId, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, it, encoderContext)
   }
 
@@ -105,7 +105,7 @@ class UUIDCodec extends Codec[UUID] {
 
   val inner = new UuidCodec
 
-  def encode(writer: BsonWriter, it: UUID, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: UUID, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, it, encoderContext)
   }
 
@@ -119,7 +119,7 @@ class EnumerationCodec[T](implicit ct: ClassTag[T], tt: TypeTag[T]) extends Code
 
   val inner = new StringCodec
 
-  def encode(writer: BsonWriter, it: T, encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: T, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, it.toString, encoderContext)
   }
 
@@ -129,7 +129,7 @@ class EnumerationCodec[T](implicit ct: ClassTag[T], tt: TypeTag[T]) extends Code
 }
 
 trait IterableCodec[T] {
-  def encodeIterable(inner: Codec[T], writer: BsonWriter, it: Iterable[T], encoderContext: EncoderContext) {
+  def encodeIterable(inner: Codec[T], writer: BsonWriter, it: Iterable[T], encoderContext: EncoderContext): Unit = {
     writer.writeStartArray()
     it.foreach(inner.encode(writer, _, encoderContext))
     writer.writeEndArray()
@@ -184,7 +184,7 @@ class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A], tt: TypeTag[A]
 
   def getEncoderClass: Class[Map[A, B]] = classOf[Map[A, B]]
 
-  def encode(writer: BsonWriter, it: Map[A, B], encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Map[A, B], encoderContext: EncoderContext): Unit = {
     writer.writeStartDocument()
     it.foreach { case (k, v) =>
       val str = k match {
@@ -232,7 +232,7 @@ class MapCodec[A, B](inner: Codec[Any])(implicit ct: ClassTag[A], tt: TypeTag[A]
 class EitherCodec[A, B](innerA: Codec[A], innerB: Codec[B]) extends Codec[Either[A, B]] {
   def getEncoderClass: Class[Either[A, B]] = classOf[Either[A, B]]
 
-  def encode(writer: BsonWriter, it: Either[A, B], encoderContext: EncoderContext) {
+  def encode(writer: BsonWriter, it: Either[A, B], encoderContext: EncoderContext): Unit = {
     writer.writeStartDocument()
     it match {
       case Left(x)  =>
@@ -257,7 +257,7 @@ class EitherCodec[A, B](innerA: Codec[A], innerB: Codec[B]) extends Codec[Either
 }
 
 class ExistentialCodec[T](v: T) extends Codec[T] {
-  override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext) {}
+  override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext): Unit = {}
 
   override def getEncoderClass: Class[T] = v.getClass.asInstanceOf[Class[T]]
 
@@ -275,11 +275,11 @@ class DynamicCodecRegistry extends CodecRegistry {
     Some(registered(it).asInstanceOf[Codec[T]])
   }.get
 
-  def register[T](codec: Codec[T]) {
+  def register[T](codec: Codec[T]): Unit = {
     registered.put(codec.getEncoderClass, codec)
   }
 
-  def registerFor[T, V <: T](codec: Codec[T], v: Class[V]) {
+  def registerFor[T, V <: T](codec: Codec[T], v: Class[V]): Unit = {
     registered.put(v, codec)
   }
 
@@ -348,7 +348,7 @@ object CodecGen {
           private val payloadName = "payload"
           override def getEncoderClass: Class[$tpe] = classOf[$tpe]
 
-          override def encode(writer: BsonWriter, value: $tpe, encoderContext: EncoderContext) {
+          override def encode(writer: BsonWriter, value: $tpe, encoderContext: EncoderContext): Unit = {
             val typeName = rtNameOf(value)
             writer.writeStartDocument
             writer.writeString(sentinelType, typeName)
@@ -512,7 +512,7 @@ object CodecGen {
 
         def getEncoderClass():Class[$tpe] = classOf[$tpe]
 
-        def encode(writer: BsonWriter, it:$tpe, encoderContext: EncoderContext) {${
+        def encode(writer: BsonWriter, it:$tpe, encoderContext: EncoderContext): Unit = {${
         q"{..${
           q"""writer.writeStartDocument""" +:
             fields.zipWithIndex.flatMap { case (field, ix) =>
