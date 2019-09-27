@@ -1,15 +1,15 @@
-val scala212 = "2.12.9"
-val scala213 = "2.13.0"
+val scala212 = "2.12.10"
+val scala213 = "2.13.1"
 
 scalaVersion in ThisBuild := scala213
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 
 lazy val `play-mongo-bson` = (project in file("."))
-  .settings(publish := Unit, publishLocal := Unit)
+  .settings(publish := Unit, publishLocal := Unit, publishArtifact := false)
   .aggregate(lib, sample)
 
 lazy val lib = (project in file("lib")).settings(
-  name := """play-mongo-bson""",
+  name := "play-mongo-bson",
   organization := "ai.snips",
   libraryDependencies ++= Seq(
     "com.typesafe.play" %% "play" % "2.7.3" % Provided,
@@ -63,10 +63,9 @@ lazy val lib = (project in file("lib")).settings(
 )
 
 lazy val sample = (project in file("sample")).enablePlugins(PlayScala).settings(
-  name := """sample""",
   libraryDependencies ++= Seq(
     guice,
     "org.mongodb.scala" %% "mongo-scala-driver" % "2.7.0"
   ),
-  publishArtifact := false
+  publish := Unit, publishLocal := Unit, publishArtifact := false
 ).dependsOn(lib)
