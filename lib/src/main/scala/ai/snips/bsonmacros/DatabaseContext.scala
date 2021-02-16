@@ -25,5 +25,5 @@ class DatabaseContext @Inject()(val conf: Configuration,
     client.getDatabase(name).withCodecRegistry(codecRegistry)
 
   def ping(): Future[Unit] =
-    client.listDatabaseNames().toFuture.map(_ => ())
+    client.listDatabaseNames().toFuture().map(_ => ())
 }
