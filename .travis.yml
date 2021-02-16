@@ -3,8 +3,8 @@ language: scala
 jdk: openjdk8
 
 scala:
-  - 2.12.9
-  - 2.13.0
+  - 2.12.10
+  - 2.13.4
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION +test

@@ -1,5 +1,5 @@
 val scala212 = "2.12.10"
-val scala213 = "2.13.1"
+val scala213 = "2.13.4"
 
 scalaVersion in ThisBuild := scala213
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
@@ -12,9 +12,9 @@ lazy val lib = (project in file("lib")).settings(
   name := "play-mongo-bson",
   organization := "ai.snips",
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %% "play" % "2.7.3" % Provided,
-    "org.mongodb.scala" %% "mongo-scala-driver" % "2.7.0" % Provided,
-    "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+    "com.typesafe.play" %% "play" % "2.8.7" % Provided,
+    "org.mongodb.scala" %% "mongo-scala-driver" % "4.2.0" % Provided,
+    "org.scalatest" %% "scalatest" % "3.2.3" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   ),
   crossScalaVersions := Seq(scala213, scala212),
@@ -65,7 +65,7 @@ lazy val lib = (project in file("lib")).settings(
 lazy val sample = (project in file("sample")).enablePlugins(PlayScala).settings(
   libraryDependencies ++= Seq(
     guice,
-    "org.mongodb.scala" %% "mongo-scala-driver" % "2.7.0"
+    "org.mongodb.scala" %% "mongo-scala-driver" % "4.2.0"
   ),
   publish := Unit, publishLocal := Unit, publishArtifact := false
 ).dependsOn(lib)

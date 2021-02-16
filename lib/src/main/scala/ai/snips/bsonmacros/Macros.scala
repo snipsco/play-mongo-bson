@@ -1,14 +1,13 @@
 package ai.snips.bsonmacros
 
-import java.time.Instant
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
-
 import org.bson._
 import org.bson.codecs.configuration._
 import org.bson.codecs.{LongCodec => BsonLongCodec, ObjectIdCodec => BsonObjectIdCodec, _}
 import org.mongodb.scala.bson.ObjectId
 
+import java.time.Instant
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import scala.collection.concurrent
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
@@ -103,7 +102,7 @@ class ObjectIdCodec extends Codec[ObjectId] {
 class UUIDCodec extends Codec[UUID] {
   def getEncoderClass: Class[UUID] = classOf[UUID]
 
-  val inner = new UuidCodec
+  val inner = new UuidCodec(UuidRepresentation.STANDARD)
 
   def encode(writer: BsonWriter, it: UUID, encoderContext: EncoderContext): Unit = {
     inner.encode(writer, it, encoderContext)
@@ -267,7 +266,9 @@ class ExistentialCodec[T](v: T) extends Codec[T] {
 
 class DynamicCodecRegistry extends CodecRegistry {
 
-  import collection.JavaConverters._
+  import scala.collection.JavaConverters._
+
+  override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = get(clazz)
 
   def get[T](it: Class[T]): Codec[T] = Try {
     providedCodecs.get(it)
@@ -285,10 +286,10 @@ class DynamicCodecRegistry extends CodecRegistry {
 
   val providedCodecs: CodecRegistry =
     CodecRegistries.fromRegistries(
-      org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY,
       CodecRegistries.fromCodecs(new DoubleCodec, new IntCodec, new LongCodec, new InstantCodec, new BooleanCodec,
-        new UUIDCodec, new ObjectIdCodec)
-    )
+        new UUIDCodec, new ObjectIdCodec),
+      org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
+  )
 
   val registered: concurrent.Map[Class[_], Codec[_]] =
     new ConcurrentHashMap[Class[_], Codec[_]]().asScala

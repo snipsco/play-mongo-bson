@@ -1,16 +1,16 @@
 package ai.snips.bsonmacros
 
-import java.time.Instant
-import java.util.UUID
-
+import ai.snips.bsonmacros.TauEnum.TauEnum
 import org.bson.types.ObjectId
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, ObjectId}
-import org.scalatest._
-import TauEnum.TauEnum
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 
+import java.time.Instant
 import java.time.temporal.ChronoUnit.MILLIS
+import java.util.UUID
 
-class BsonMacrosTest extends FlatSpec with Matchers {
+class BsonMacrosTest extends AnyFlatSpec with should.Matchers {
 
   implicit val registry: DynamicCodecRegistry = new DynamicCodecRegistry
 

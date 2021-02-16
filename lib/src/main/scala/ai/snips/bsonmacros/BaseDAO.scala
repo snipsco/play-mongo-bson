@@ -40,20 +40,20 @@ abstract class BaseDAO[DO](implicit ct: ClassTag[DO],
     findOne(byIdSelector(id))
 
   def findOne(document: Document): Future[Option[DO]] =
-    collection.find[DO](document).limit(1).toFuture.map(_.headOption)
+    collection.find[DO](document).limit(1).toFuture().map(_.headOption)
 
   def updateOneById(id: CanBeBsonValue, update: Document): Future[_] =
-    collection.updateOne(byIdSelector(id), update).toFuture
+    collection.updateOne(byIdSelector(id), update).toFuture()
 
   def replaceOne(it: DO): Future[_] =
-    collection.replaceOne(byIdSelector(getId(it)), it).toFuture
+    collection.replaceOne(byIdSelector(getId(it)), it).toFuture()
 
   def insertOne(it: DO): Future[_] =
-    collection.insertOne(it).toFuture
+    collection.insertOne(it).toFuture()
 
   def upsertOne(it: DO): Future[_] =
     collection.replaceOne(byIdSelector(getId(it)), it,
-      ReplaceOptions().upsert(true)).toFuture
+      ReplaceOptions().upsert(true)).toFuture()
 
   def all: FindObservable[DO] = collection.find()
 
